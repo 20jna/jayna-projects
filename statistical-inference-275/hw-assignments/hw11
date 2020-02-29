@@ -1,0 +1,145 @@
+---
+title: 'HW #11'
+author: "Jay Na"
+date: "6/3/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**1. Exercise 11.6**
+
+**a)** The 95% CI for the true proportion is (0.855, 0.943).
+```{r}
+p <- 160/178
+n <- 178
+
+p + c(-1,1)*qnorm(.975)*sqrt((p*(1-p))/n)
+```
+
+**b)** The theta estimate for the first statistician is 0.85 with a 95% credible interval of (0.849, 0.937). For the second statistician, the estimate is 0.5 with a 95% credible interval of (0.846, 0.935). The third had an estimate of 0.6 with a 95% credible interval of (0.833, 0.925).
+```{r}
+#first statistician
+(alph1 <- ((.1765)-(1.1765)*(0.025))/(0.025*1.3841))
+(beta1 <- alph1/.85 - alph1)
+
+(exp1 <- (alph1)/(alph1+beta1))
+(CredInt1 <- qbeta(c(0.025,0.975), 160+alph1, 178-160+beta1))
+
+#second statistician
+alph2 <- 1
+beta2 <- 1
+
+(exp2 <- (alph2)/(alph2+beta2))
+(CredInt2 <- qbeta(c(0.025,0.975), 160+alph2, 178-160+beta2))
+
+#third statistician
+alph3 <- 6
+beta3 <- 4
+
+(exp3 <- (alph3)/(alph3+beta3))
+(CredInt3 <- qbeta(c(0.025,0.975), 160+alph3, 178-160+beta3))
+```
+
+**c)**
+```{r}
+#first statistician
+curve(dbeta(x, alph1, beta1), ylab = "Density", xlab = expression(theta), cex.lab=1.5, cex.axis=1.5, ylim = c(0,30), xlim = c(.7,1), n=1e4, main = "First Statistician
+      Distributions")
+curve(dbeta(x, 160+alph1, 178-160+beta1), add=T, n=1e3, col='red')
+legend("topright", legend = c("Prior", "Posterior"), lty=c(1,1), col = c("black","red"), bty='n')
+```
+
+```{r}
+#second statistician
+curve(dbeta(x, alph2, beta2), ylab = "Density", xlab = expression(theta), cex.lab=1.5, cex.axis=1.5, ylim = c(0,30), xlim = c(.7,1), n=1e4, main = "Second Statistician
+      Distributions")
+curve(dbeta(x, 160+alph2, 178-160+beta2), add=T, n=1e3, col='red')
+legend("topright", legend = c("Prior", "Posterior"), lty=c(1,1), col = c("black","red"), bty='n')
+```
+
+```{r}
+#third statistician
+curve(dbeta(x, alph3, beta3), ylab = "Density", xlab = expression(theta), cex.lab=1.5, cex.axis=1.5, ylim = c(0,23), xlim = c(.7,1), n=1e4, main = "Third Statistician
+      Distributions")
+curve(dbeta(x, 160+alph3, 178-160+beta3), add=T, n=1e3, col='red')
+legend("topright", legend = c("Prior", "Posterior"), lty=c(1,1), col = c("black","red"), bty='n')
+```
+
+**d)** The probability for the first statistician is 0.482, for the second is 0.428, and the third is 0.242.
+```{r}
+#first statistician
+pbeta(.9, 160+alph1, 178-160+beta1, lower.tail=FALSE)
+
+#second statistician
+pbeta(.9, 160+alph2, 178-160+beta2, lower.tail=FALSE)
+
+#third statistician
+pbeta(.9, 160+alph3, 178-160+beta3, lower.tail=FALSE)
+```
+
+**2. Exercise 11.11**
+
+**a)** The posterior mean of u is 19.526 with a posterior SD of 1.480 and posterior precision of 0.457.
+```{r}
+sd0 <- 6
+u0 <- 25
+sdd <- 5
+x.bar <- 19
+n <- 15
+
+(mean1 <- ((1/sdd^2)/(1/sdd^2+n/sd0^2))*u0 + ((n/sd0^2)/(1/sdd^2+n/sd0^2))*x.bar)
+(sd1 <- 1/sqrt(1/sdd^2+n/sd0^2))
+(prec1 <- 1/sdd^2+n/sd0^2)
+```
+
+**b)** The posterior mean of u is 19.168 with a posterior SD of 0.837 and posterior precision of 1.429.
+```{r}
+sd0 <- 6
+u0 <- 25
+sdd <- 5
+x.bar <- 19
+n <- 50
+
+(mean2 <- ((1/sdd^2)/(1/sdd^2+n/sd0^2))*u0 + ((n/sd0^2)/(1/sdd^2+n/sd0^2))*x.bar)
+(sd2 <- 1/sqrt(1/sdd^2+n/sd0^2))
+(prec2 <- 1/sdd^2+n/sd0^2)
+```
+
+**c)** The posterior mean of u is 19.141 with a posterior SD of 1.531 and posterior precision of 0.427.
+```{r}
+sd0 <- 6
+u0 <- 25
+sdd <- 10
+x.bar <- 19
+n <- 15
+
+(mean3 <- ((1/sdd^2)/(1/sdd^2+n/sd0^2))*u0 + ((n/sd0^2)/(1/sdd^2+n/sd0^2))*x.bar)
+(sd3 <- 1/sqrt(1/sdd^2+n/sd0^2))
+(prec3 <- 1/sdd^2+n/sd0^2)
+```
+
+**d)** When the sample size was larger (ie. b), the posterior mean was slightly smaller than the in the prior distribution. The same result happened also when the prior standard deviation was larger (ie. c). The posterior standard deviation was higher when the prior standard deviation was higher, whereas it was lower when the sample size was larger. The posterior precision increased when the sample size was larger. The posterior precision for when the prior standard deviation was larger was slightly smaller but was relatively similar to when the prior standard deviation was 5.
+
+**3. Excercise 11.16**
+
+**a-d on separate sheet**
+
+**e)** The 95% credible interval is (0.802, 0.949).
+```{r}
+qbeta(c(0.025, 0.975), 62, 8)
+```
+
+
+**4.**
+
+**a)** The expected value of the sample mean is 10 with a SE of 0.9.
+```{r}
+(exp.value1 <- 10)
+
+(se1 <- 3^2/sqrt(100))
+```
+
+**c)** Yes, if Bad Andy pretended that he used Good Andy's account it wouldn't take the factor of that there is a dependency of when the sampled person tears and when he tears right after. Whereas, Good Andy samples are independent.
