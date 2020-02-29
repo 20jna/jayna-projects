@@ -1,0 +1,82 @@
+---
+title: "Homework #3 (REVISED)"
+author: "Jay Na"
+date: "9/25/2019"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**1.**
+```{r, fig.align = 'center',fig.width = 10, fig.height = 5}
+y <- c(0,5,10)
+theta <- c(0.2,0.5)
+n_grid <- seq(0, 100, by = 1)
+
+#all combinations
+combo <- expand.grid(y,theta)
+
+#grid of graphs
+par(mfrow = c(2,3))
+
+for (t in 1:6){
+  prior <- dpois(combo[t,1], lambda = 5)
+  likelihood <- dbinom(combo[t,1],prob = combo[t,2], size = n_grid)
+  posterior <- prior*likelihood
+  
+  plot(x = n_grid, y = posterior, type = "l", col = t, xlab = "value of n", 
+       main = c(paste("y=",combo[t,1]), paste("theta=",combo[t,2])))
+}
+mtext("The Posterior Distributions of n",line = -1, outer = TRUE, cex = .75)
+```
+*The effects of Y and theta:* As Y increases, the posterior mean increases. When theta is larger (i.e. theta=0.5), the posterior mean is smaller (in value) and the posterior distribution curve is narrower, meaning the credible intervals would more narrowed towards the mean.
+
+**2a.)**
+```{r, fig.align = 'center', fig.width = 5, fig.height = 3}
+set.seed(123423)
+
+theta <- seq(0, 100, by = .001)
+prior <- dunif(theta, min = 0, max = 100)
+y <- c(43,44,45,46.5,47.5)
+  
+log_likelihood <- 0
+
+for(t in seq_along(y)) {
+  log_likelihood <- log_likelihood + dcauchy(y[t], location = theta, scale = 1, log = TRUE)
+}
+
+likelihood <- exp(log_likelihood)
+
+unnorm_posterior <- prior*likelihood
+norm_posterior <- (prior*likelihood) / sum(prior*likelihood)
+
+plot(x = theta, y = unnorm_posterior, type = "l", xlab = expression(theta), 
+     main = "Unnormalized Posterior Density Distribution")
+plot(x = theta, y = norm_posterior, type = "l", xlab = expression(theta), 
+     main = "Normalized Posterior Density Distribution")
+```
+
+**2b.)**
+```{r, fig.align = 'center', fig.width = 5, fig.height = 3}
+set.seed(123423)
+
+theta_draws <- sample(theta, size = 1e3, prob = norm_posterior, replace = TRUE)
+
+hist(x = theta_draws, xlab = "Theta Draw Values", 
+     main = "Histogram of Theta Draws", breaks = 40)
+```
+
+**2c.)**
+```{r, fig.align = 'center', fig.width = 5, fig.height = 3}
+set.seed(12323)
+
+pos_sim <- rcauchy(1e3, location = theta_draws, scale = 1)
+
+hist(pos_sim, xlab = "Predictive Draw Values", 
+     main = "Histogram of the Predictive Draws", breaks = 20)
+```
+
