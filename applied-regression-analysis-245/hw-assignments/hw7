@@ -1,0 +1,88 @@
+---
+title: "HW7"
+author: "Jay Na"
+date: "10/30/2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(Sleuth3)
+party <- case2001
+
+library(lattice)
+
+disease <- ex2012
+
+missle <- ex2018
+```
+
+1.
+a) The probabilities of survival for females of ages 25 and 50 are estimately .78 and .33 respectively. For males of ages 25 and 50, the probabilities of survival are .41 and .09 respectively. 
+b) The ages at which the estimated probabilities of survival for women and men are 50% are 44 and 24 respectively.
+
+2.
+a)
+```{r, echo=FALSE}
+bwplot(Age~Status|Sex, data = party, main = "Age Distributions for Men and Women in the Donner Party")
+
+party1.glm <- glm(Status ~ Age + Sex, data = party, family = "binomial")
+party.glm <- glm(Status ~ Age + Sex + Age*Sex, data = party, family = "binomial")
+
+```
+The distributions for men in the Donnor Party who died and survived have relatively the same IQR; whereas, the IQR for women who died is significantly higher in age than the IQR for woman who survived, which is relatively is the same as the ones for men. Because of the difference in distributions for women that died and survived and the similarity in distributions of woman that survived and for men in both categories, this graph suggests a possible interactive effect between age and sex.
+
+b) The estimated effect and stardard error for the interaction term of age and sex is estimately 0.16 and 0.09 respectively. The coefficient estimate is estimately 1.18. This means that there is a 1.18 increase in the odds associated with a one-unit increase in age for males, holding sex constant.
+
+c)
+```{r, echo = FALSE}
+anova(party1.glm, party.glm, test = "LRT" )
+```
+The p-value for the the likelihood ratio test for the interaction term is 0.048, which is almost twice as lower than the p-value derived from the summary table for the Z-test of the term, which is estimately 0.087. From this, my conclusions about the interaction term change substantially. With a p-value of 0.087, the interaction model is "insignificant" to the whether the adult in the Donnor party is a survivor or not;, whereas, when getting a p-value of 0.048, the interaction between age and sex "significantly" effects whether the adult in question in the Donnor party is a survivor or not. 
+
+d) The estimated odds ratio of survival, for a female vs. a male who are both 30 years old is .20. The estimated odds ratio of survival, for a female vs. a male who are both 40 years old is the same. Because the estimated odds ratio is close to 0, there is evidence that the odds of success for females and males, when there are 30 and when they are 40, are not equal.
+
+e) 
+```{r, echo = FALSE}
+exp(coef(party.glm)[2] + c(-1,1)*qnorm(.025)*sqrt(vcov(party.glm)[2,2]))
+```
+The estimated change in the odds of survival for a one year increase in age for females, holding other predictors constant, is .82. The 95% confidence interval for the estimated change in the odds of survival is estimately (.69, .98). The odds of survival are somewhere between .69 to .98 times bigger for females with a one year increase in age, holding gender constant (95% confidence).
+
+3.
+a)
+```{r, echo=FALSE}
+plot(log(CK)~H, data = disease, pch = ifelse(disease$Group == 'Case', 1,2), main = "Values of Hemopexin vs the Log of Creatine Kinase", ylab = "log of Creatine Kinase (CK)", xlab = "Hemopexin (H)")
+legend("topleft", legend = c("Muscular Dystrophy Carriers", "Controls"), pch = c(1,2))
+```
+High values of H and the log of CK appear to be values of the muscular dystrophy carriers and when the H and the log of Creatine is relatively low, when looking at the graph, the values seem to be of the controls. It appears from the plot that H and the log of CK might be useful predictors of whether a woman is a carrier.
+
+c) 
+```{r, echo=FALSE}
+disease.glm <- glm(Group~log(CK)+H, data = disease, family = binomial)
+summary(disease.glm)
+```
+The coefficients for log(CK) and H are estimately -4.02 and -.014 respectively. The standard errors are estimately 0.83 and 0.04 respectively.
+
+e) The odds that she is a carrier relative to the odds that a woman with typical values is a carrier is estimately .013.
+
+4.
+a) The textbook suggest including a quadratic effect of age in the model for the odds of tire failure in order to take account for tire replacements. Because tires are usually are usually replaced after 3 to 5 years, the odds of the car failing would decrease. In order to take account for the quadratic effect of age on odds increasing then decreasing, we add a quadratic effect of age in the model.
+
+b)
+```{r, echo=FALSE}
+bwplot(Passengers~Cause|Make, data = missle, main = "Distributions of Fatal Accidents with Sports Vehicles")
+
+missle.glm <- glm(Cause ~ VehicleAge + (VehicleAge^2) + Passengers + Make + Passengers*Make, data = missle, family = binomial)
+```
+The IQRs for the distribution of accidents involving Ford cars due to other reasons besides tires and the distributions for accidents involving other vehicles due to tires and other is realitively the same; whereas, the IQR for the  distribution for Ford cars due to tires is substantially bigger. Because of the significant differences in IQRs, the graph suggests an interaction between vehicle type and number of passengers in the model for odds of tire failure.
+
+c)
+log(odds for Fords) = -7.03 + .86VehicleAge + .74(VehicleAge^2) + .77Passengers - 1.73Make[0] - .57Passengers*Make[0]
+
+log(odds for non-Ford vehicles) = 7.25 + .86VehicleAge + .74(VehicleAge^2) + .77Passengers - 1.73Make[1] - .57Passengers*Make[1]
+
+d) oddsratio = e^(-8.76 + .27Passengers)/e^(-7.03 + .77Passengers) 
+The odds ratio is measuring the odds of survival for make of Ford vehicles vs. make of other vehicles, keeping age constant.
+
+e) The odds ratios for passenger levels of 0, 1, 2, 3, and 4 passengers are estimately 1.77, 2.11*10^-4, 2.53*10^-7, 3.02*10^-10, and 3.61*10^-13 respectively. This tells us that the odds of survival from tire-related accidents for Ford vehicles and other vehicles are more different as passengers increase.
