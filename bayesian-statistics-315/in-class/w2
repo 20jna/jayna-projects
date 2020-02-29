@@ -1,0 +1,24 @@
+---
+title: "comparing groups_inclass"
+author: "Jay Na"
+date: "10/9/2019"
+output: pdf_document
+---
+
+```{r}
+set.seed(3124234)
+
+n <- 2220
+
+y <- c(1043, 955, 222)
+
+alpha <- c(1044,956,223)
+library(MCMCpack)
+theta <- rdirichlet(1000,alpha)
+
+diffp <- theta[,1] - theta[,2]
+
+hist(diffp)
+mean(diffp > 0)
+
+```
