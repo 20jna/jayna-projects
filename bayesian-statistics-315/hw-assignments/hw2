@@ -1,0 +1,53 @@
+---
+title: "Homework #2"
+author: "Jay Na"
+date: "9/22/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message=FALSE}
+library(data.table)
+library(HDInterval)
+```
+
+**1a.)**
+```{r}
+set.seed(12340)
+
+theta <- c(0,.125,.25,.375,.5,.625,.75,.875,1)
+prior <- c(.001,.001,.95,.008,.008,.008,.008,.008,.008)
+
+likelihood <- pbinom(6, size = 10, prob = theta)
+
+posterior.distr <- prior*likelihood
+
+data.table(theta, prior, likelihood, posterior.distr)
+```
+
+**1b.)** The posterior probability that Bob has no ability (theta=.25) is approximately 94.67%.
+
+**2a.)** & **2b.)** are on other sheet.
+
+**2c.)** A 93% credible interval for theta is (.591,.869).
+```{r}
+qbeta(c(.035, 1-.035), 23, 8)
+```
+
+**2d.)** A 93% HPDI for theta is (.605,.873).
+```{r}
+set.seed(12310)
+
+draws <- rbeta(10000, 23, 8)
+hdi(draws, credMass = 0.93)
+```
+
+**2e.)** The probability that theat exceeds 0.6 is approximately 95.65%.
+```{r}
+pbeta(.6, 23, 8, lower.tail = FALSE)
+```
+
+**3.** on separate sheet.
