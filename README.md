@@ -1,2 +1,2 @@
 # jayna-projects
-Jay's Past Work/Projects
+Jay Na's Repository of Past Work & Projects
