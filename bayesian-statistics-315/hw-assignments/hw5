@@ -1,0 +1,125 @@
+---
+title: 'Homework #5'
+author: "Jay Na"
+date: "10/3/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**10.**
+
+**a.)**
+```{r, fig.width = 3.5, fig.height = 3.5}
+x <- seq(0,1, by = .01)
+
+# Expert #1 w/ prob = .95, sd = 0.05
+mu1 <- .95
+sd1 <- 0.05
+var1 <- sd1^2
+
+a <- (((1-mu1)/var1)-(1/mu1))*mu1^2 #a and b derived from exp.value & var eqs of beta
+b <- a*((1/mu1)-1)
+beta1 <- dbeta(x,a,b)
+
+# Expert #2 w/ prob = .80, sd = 0.2
+mu2 <- .8
+sd2 <- 0.2
+var2 <- sd2^2
+
+a <- (((1-mu2)/var2)-(1/mu2))*mu2^2
+b <- a*((1/mu2)-1)
+beta2 <- dbeta(x,a,b)
+
+# mixture of priors w/ equal weight
+beta_mix <- 0.5*beta1 + 0.5*beta2
+
+plot(x = x, y = beta1, type = "l", lty = 3, xlab = "Alarm Probability", 
+     ylab = "Density", main = "Beta PDFs of Experts & their Mixture")
+lines(x = x, y = beta2, type = "l", lty = 4)
+lines(x = x, y = beta_mix, type = "l", lty = 5)
+legend(.05, 14.9, legend = c("Expert 1", "Expert 2", "Mix of Priors"), 
+       lty = c(3,4,5), cex = 0.5)
+```
+
+**b.)**
+```{r, fig.width = 3.5, fig.height = 3.5}
+#uniform prior
+
+prior_me <- dunif(x, min = 0, max = 1)
+likelihood_me <- dbinom(5, size = 5, prob = x)
+
+prior1 <- dbinom(5, size = 5, prob = mu1)
+prior2 <- dbinom(5, size = 5, prob = mu2)
+prior_mix <- dbinom(5, size = 5, prob = 0.5*mu1 + 0.5*mu2)
+
+post_me <- prior_me*likelihood_me
+post1 <- prior1*beta1
+post2 <- prior2*beta2
+post_mix <- prior_mix*beta_mix
+
+plot(x = x, y = post_me, type = "l", lty = 2, xlab = "Alarm Probability", 
+     ylab = "Density", main = "Posterior DSNs under Different Priors")
+lines(x = x, y = post1, type = "l", lty = 3)
+lines(x = x, y = post2, type = "l", lty = 4)
+lines(x = x, y = post_mix, type = "l", lty = 5)
+legend(.05, .98, 
+       legend = c("Uniform", "Expert 1", "Expert 2", "Mix of Priors"), 
+       lty = c(2,3,4,5), cex = 0.5, title = "Prior Under")
+```
+
+**11.**
+
+**a.)**
+```{r, fig.width = 3.5, fig.height = 3.5}
+set.seed(2334)
+x <- seq(0,1,by = 0.01)
+theta <- runif(x,0,1)
+gamma <- log(theta/(1-theta))
+hist(theta, xlab = expression(gamma), ylab = "Theta", 
+     main = "DSN of Theta")
+hist(gamma, xlab = expression(theta), ylab = "Gamma", 
+     main = "Induced Prior on Gamma")
+```
+
+**b.)**
+```{r, fig.width = 3.5, fig.height = 3.5}
+set.seed(2334)
+x <- seq(0,1,by = .01)
+theta <- rbeta(x,0.5,0.5)
+gamma <- log(theta/(1-theta))
+hist(theta, xlab = expression(gamma), ylab = "Theta", 
+     main = "DSN of Theta")
+hist(gamma, xlab = expression(theta), ylab = "Gamma", 
+     main = "Induced Prior on Gamma")
+```
+
+**c.)**
+```{r, fig.width = 3.5, fig.height = 3.5}
+set.seed(2334)
+x <- seq(0,1,by = 0.01)
+gamma <- runif(x,0,100)
+theta <- gamma/(1+gamma)
+hist(gamma, xlab = expression(theta), ylab = "Gamma", 
+     main = "DSN of Gamma")
+hist(theta, xlab = expression(gamma), ylab = "Theta", 
+     main = "Induced Prior on Theta")
+```
+
+**d.)**
+```{r, fig.width = 3.5, fig.height = 3.5}
+set.seed(23874)
+x <- seq(0,1,by = 0.01)
+gamma <- rgamma(x,1,1)
+theta <- gamma/(1+gamma)
+hist(gamma, xlab = expression(theta), ylab = "Gamma", 
+     main = "DSN of Gamma")
+hist(theta, xlab = expression(gamma), ylab = "Theta", 
+    main = "Induced Prior on Theta")
+```
+
+**e.)** I would say d has a prior that is simultaneously uninformative for both theta and gamma.
+
+
