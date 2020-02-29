@@ -1,0 +1,107 @@
+---
+title: "Estimating & Predicting Test Scores using Bayesian Analysis"
+author: "Jay Na and Travis Brown"
+date: "10/22/2019"
+header-includes:
+    - \usepackage{setspace}\doublespacing
+fontside: 11pt
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, echo = FALSE, message = FALSE}
+# loading libraries
+library(truncnorm)
+library(dplyr)
+
+# loading data
+scores <- read.csv("http://aloy.rbind.io/data/test_scores.csv")
+
+# grid approximation of mu w/ constraints at 50 and 100
+mu <- seq(50, 100, by = .5)
+x <- dnorm(mu, 75, 50)
+
+# normalizing mu prior
+prior1 <- x/(sqrt(2*pi*50))
+
+# grid approximation of sigma-squared w/ constraints at 0 and 50
+sigma_2 <- seq(0, 50, by = .5)
+y <- (1/dgamma(sigma_2, .01, .01))
+
+# normalizing sigma-squared prior
+prior2 <- y/(sum(y))
+
+# calculating joint prior
+prior <- prior1*prior2/(sum(prior1*prior2))
+
+# calculating joint prior
+prior <- prior1*prior2/(sum(prior1*prior2))
+
+# setting grid approximation for likelihood
+grid <- seq(0, 100, by = 1)
+
+# calculating likelihood dsn using constraints 0 to 100 and data set mu & sd
+likelihood <- dtruncnorm(grid, a = 0, b = 100, mean = 87.27, sd = 8.8)
+
+# calculating unnormalized posterior dsn
+probData <- likelihood*prior
+
+# normalizing posterior
+post <- probData/sum(probData)
+
+# Monte Carlo
+posterior_draws <- sample(grid, 1000, replace = TRUE, prob = post)
+```
+## Introduction
+
+In general, Bayesian analysis can be used to estimate particular parameters of a statistical model given some data. When we are given a limited amount of data, Bayesian models can be easier to understand and interpret than others. For our study, we are given one data set that contains 29 test scores from the first exam in Math 215. With this small amount of data, we inferred that a Bayesian model would work best with our further predictions. And so, we must find a way to conduct a Bayesian analysis and create a model to generate information about future scores on the same exam. The exam was out of 100 points with a class original average of 87.3 out of 100. The lowest score of the class was a 67 and the highest was a perfect 100. With this information and with our Bayesian model, we plan on estimating the mean and variance of the test scores. Then, we will predict the score of a future Math 215 student.   
+
+## Model Specification
+
+For a Bayesian model, the posterior	$P(\mu,\sigma^2\mid Y_{1},...,Y_{n})$ is proportional to the likelihood times the prior. In this case, we have a likelihood given by a truncated normal distribution. There are 4 parameters for the truncated normal distribution, $\mu$, $\sigma^2$, a, and b. $\mu$ represents the mean score of the tests from our 29 observations, while $\sigma^2$ represents the variance of these test scores. In a truncated normal distribution there are constraints, a and b, in which y exists. Because the test scores realistically can range from 0 to 100, we set a and b accordingly. Given so, below is what our likelihood distribution looks like.
+
+```{r, echo = FALSE, fig.align = 'center', fig.width = 5, fig.height = 3.5}
+plot(likelihood, type = "l", main = "Likelihood DSN", ylab = "Likelihood", xlab = "Test Score Values")
+```
+
+We were given that the prior distributions of $\mu$ and $\sigma^2$ were distributed with Normal($\theta$, $\tau^2$) and InverseGamma($\gamma$, $\delta$) distributions, respectively. Unfortunately, we do not have any experts to consult with on prior elicitation and therefore we believe that it is best to use a diffuse prior. To do this we chose values for the parameters of the prior distributions as close to random as possible, with slight influence from prior experience. This prior experience with taking math and stats tests at Carleton led us to choose constraints for the value of $\mu$ to be between 50 and 100. For $\theta$, we chose 75, a value half way between our constraint. We believe that these values are very safe and uninformative to the data. To help with this we set the $\tau^2$ value to be large in order to get a flattened normal distribution. 
+
+```{r, echo = FALSE, fig.align = 'center', fig.width = 5, fig.height = 3.5}
+plot(prior1, type = "l", main = "MU Prior DSN", xlab = expression(mu), ylab = "Density")
+```
+
+For the prior distribution of $\sigma^2$ we also picked values of the parameters that would give the a diffuse prior. Therefore, for $\gamma$ and $\delta$ we selected values of .001 for both with a constraint of 0 to 50.
+
+```{r, echo = FALSE, fig.align = 'center', fig.width = 5, fig.height = 3.5}
+plot(prior2, x = sigma_2, type = "l", main = "Sigma Squared Prior DSN", xlab = expression(sigma^2), ylab = "Density")
+```
+
+Again we believe that these parameters for the prior distributions will help let the data speak for itself after the posterior is derived. Because these prior distributions are assumed to be independent, we can achieve a joint prior distribution by multiplying the two together.
+
+```{r, echo = FALSE, fig.align = 'center', fig.width = 5, fig.height = 3.5}
+plot(prior, type = "l", main = "Joint Prior DSN", xlab = "Test Scores", ylab = "Density")
+```
+
+## Computation
+
+To compute our posterior we used grid approximation across the likelihood and the joint prior. In Bayesian statistics, the posterior is said to be proportional to the likelihood times the prior. In our case, we use the likelihood that we derived with the truncated normal distribution and data set information and multiply it with our joint prior that we also derived earlier and standardize it by dividing it by the total sum of all likelihood times priors across our grid. There will be 100 of these values, given that we set our grid to be 0 to 100 to emulate the possible test scores. Once we have our posterior distribution, we then use Monte Carlo sampling to get random draws of test scores using our posterior distribution as our probabilites to find estimates for our study. 
+
+## Results
+
+The results we found were very similar to what we expected them to be when using a diffuse prior. In other words, our posterior distribution is mostly influenced by the likelihood distribution as you can see below.
+
+```{r, echo = FALSE, fig.align = 'center', fig.width = 5, fig.height = 3.5}
+plot(post, type = "l", col = 4, ylab = "Posterior Value", xlab = "Test Scores", main = "Posterior DSN of Exam Scores")
+lines(likelihood, col = 2)
+lines(prior, col = 3)
+legend(1, .04, legend = c("Posterior", "Likelihood", "Prior"), col = c(4,2,3), lty = c(1,1,1), cex = 0.5)
+```
+
+From here, we learned that with little to no prior information, our estimations are mostly influenced by what the likelihood is set as, which in this case is a truncated normal distribution. And so, the posterior distribution of $\mu$ had an estimated mean of 86.9 and a standard deviation of 7.15, which both reflect the observed data really well and are reasonable estimates obtainable with only one data set.
+
+## Prediction
+
+Using our Monte Carlo sampling we discussed in the Computation Section, we were able to predict that a score of a future Math 215 student is between 71 to 99 with 95% probability. We chose to show our prediction as an interval in order to take account the randomness that can occur with future observations.
