@@ -1,0 +1,101 @@
+---
+title: 'HW #9'
+author: "Jay Na"
+date: "11/1/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**Chapter 3 Exercise 11**
+
+The candidate distribution for alpha is a normal distribution with mean of alpha and a candidate standard deviation of 0.1. Beta has the same candidate distribution but with mean of beta. The acceptance ratios for alpha and beta are 0.624 and 0.264, respectively. As you can see from the traceplots, the chains have converged.
+
+```{r}
+# loading data
+y <- c(64, 13, 33, 18, 30, 20)
+t <- 1:6
+
+# creating an empty matrix for the MCMC samples
+S <- 10000
+mcmc.draws <- matrix(NA,S,2)
+colnames(mcmc.draws) <- c("alpha","beta")
+fitted <- matrix(NA,S,6)
+
+# setting initial values
+alpha <- 0
+beta <- 0
+
+# acceptance rate tracking
+att_alpha <- 0 # alpha attempts
+acc_alpha <- 0 # alpha acceptances
+att_beta <- 0 # beta attempts
+acc_beta <- 0 # beta acceptances
+
+#posterior function
+log_posterior <- function(alpha, beta, y, t){
+  alpha_prior <- sum(dnorm(alpha, 0, 100, log = TRUE))
+  beta_prior <- sum(dnorm(beta, 0, 100, log = TRUE))
+  log_prior <- alpha_prior + beta_prior
+  
+  lambda <- exp(alpha + beta*t)
+  log_likelihood <- sum(dpois(y, lambda, log = TRUE))
+  
+  log_post <- log_prior + log_likelihood
+  return(log_post)
+}
+
+can_sd <- 0.1
+
+# Metropolis sampling
+
+for (s in 1:S){
+  #current parameter values
+  can_alpha <- alpha
+  can_beta <- beta
+  
+  # mu-step for alpha
+  att_alpha <- att_alpha + 1
+  can_alpha <- rnorm(1, alpha, sd = can_sd)
+  log_R <- log_posterior(can_alpha, beta, y, t) - log_posterior(alpha, beta,y ,t)
+  
+  # accept/reject mu-can_alpha
+  if(log(runif(1)) <= log_R){
+    alpha <- can_alpha
+    acc_alpha <- acc_alpha + 1
+  }
+  
+  # mu-step for beta
+  att_beta <- att_beta + 1
+  can_beta <- rnorm(1, beta, sd = can_sd)
+  log_R <- log_posterior(alpha, can_beta, y, t) - log_posterior(alpha, beta, y, t)
+  
+  # accept/reject mu-can_beta
+  if(log(runif(1)) <= log_R){
+    beta <- can_beta
+    acc_beta <- acc_beta + 1
+  }
+  
+  # storing results
+  mcmc.draws[s,] <- c(alpha, beta)
+  fitted[s,] <- exp(alpha + beta*t)
+}
+```
+
+```{r}
+# acceptance ratios
+(alpha_accrate <- acc_alpha/att_alpha)
+(beta_accrate <- acc_beta/att_beta)
+```
+
+```{r, fig.width = 5, fig.height = 7}
+# Traceplots for alpha and beta
+par(mfrow = c(3,1))
+plot(x = 1:S, y = mcmc.draws[,"alpha"], xlab = "Iteration", ylab = "MCMC sample", 
+     type = "l", main = "Alpha Traceplot")
+plot(x = 1:S, y = mcmc.draws[,"beta"], xlab = "Iteration", ylab = "MCMC sample", 
+     type = "l", main = "Beta Traceplot")
+```
+
