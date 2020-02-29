@@ -1,0 +1,95 @@
+---
+title: "Exploring Racism in Jury Selection"
+author: "Jay Na and Aaron Prentice"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r, echo=FALSE, message = FALSE}
+#Loading ggplot and data
+library(tidyverse)
+jurors <- read_csv("data/jurors.csv")
+trials <- read_csv("data/trials.csv")
+answers <- read_csv("data/voir_dire_answers.csv")
+```
+
+###Introduction
+
+In the Batson v. Kentucky trial in 1986, the United States Supreme Court ruled that courts would not be allowed to use a peremptory strike against potential jurors because of race.  However, one court case in Fifth Circuit Court District of Mississippi was overturned by the Mississippi Supreme Court because the district attorney Doug Evans committed a Batson violation - striking jurors because of their race.  This sparked further research into the Fifth Circuit Court District of Mississippi to see if this one Batson violation was actually a common pattern for jury selection.  This research gave us detailed data about 157 trials from 1992-2017 from the Fifth Circuit Court District of Mississippi, including both the trial and juror information.  We not only wanted to look at the race of the juror as a factor, but also the race of the defendant.  We believed that all aspects of race should be examined if there is potential racial bias in the court.  We chose to look at these racial components to determine if there truly was discrimination against African Americans in the jury selection.
+
+```{r, echo = FALSE, message = FALSE}
+#condensing juror data set by selecting key categorical variables, created more descriptive names for certain columns
+jurors2 <- jurors %>%
+        mutate(trials_id = trial__id) %>%
+        mutate(juror_id = id) %>%
+        mutate(juror_race = race) %>%
+        mutate(juror_gender = gender) %>%
+        select(trials_id, juror_id, juror_race, juror_gender, struck_by, strike_eligibility)
+
+#condensing trial data set by selecting key categorical variables, renaming id to trials_id
+trials2 <- trials %>%
+        mutate(trials_id = id) %>%
+        select(trials_id, defendant_name, cause_number, state_strikes, defense_strikes, defendant_race, judge, verdict, prosecutor_1, batson_claim_by_defense, batson_claim_by_state, case_appealed)
+
+
+#creating new data set by joining new trial and juror data sets by their trials_id
+tandj <- left_join(jurors2, trials2, by = "trials_id") %>%
+#removing null values
+        filter(strike_eligibility != "n/a")
+```
+
+###Methodology
+
+To look at race possibly being a factor of peremptory strikes, we gathered data about the jurors and trials for cases from 1992-2017 from the Fifth Circuit Court District of Mississippi.  The jurors dataset gave us information about the jurors (race, gender, being struck).  The trials data gave us information about the case in court, such as information about the defendants, prosecutors, and judges for 157 different trials.
+
+Then we filtered our data to focus on the jurors’ race, the defendant’s race and whether jurors were struck by the prosecutor.  We then only focused on people that were struck by the state and were either black or white because they made up a majority of our data and we wanted to see if being black made somebody more likely to be struck.  We then created variables for the amount of white and black people that were struck by the state for each trial in the data.  By creating this variable, we were able to then create a new variables that gave the proportion of jurors that were struck for both black and white people.  We used these two variables to create another variable, which would be the difference in the proportions of black and white people that were struck.
+
+```{r, echo = FALSE, message = FALSE}
+#creating new data set to include proportions
+props <- tandj %>%
+            group_by(trials_id) %>%
+#creating categorical variables that give the total number of black and white jurors by each trial
+            mutate(blackjurors = sum(juror_race == "Black")) %>%
+            mutate(whitejurors = sum(juror_race == "White")) %>%
+#creating categorical variables that give the total number of black and white jurors struck by the state by each trial
+            mutate(b_struck = sum(juror_race == "Black" & struck_by == "Struck by the state")) %>%
+            mutate(w_struck = sum(juror_race == "White" & struck_by == "Struck by the state")) %>%
+#creating categorical variables that give the proportion of black and white jurors struck by the state by each trial
+            mutate(b_prop = b_struck/blackjurors) %>%
+            mutate(w_prop = w_struck/whitejurors) %>%
+#creating categorical variable that gives the difference in mean for each trial
+            mutate(dif_prop = b_prop-w_prop)
+            
+```
+
+###Results
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+tandj %>%
+#filtering new data set tandj to include only white and black defendants and white and black jurors that were struck by the state
+  filter(defendant_race == c("White","Black")) %>%
+  filter(juror_race == c("White", "Black")) %>%
+  filter(struck_by == "Struck by the state") %>%
+#creating graph that illustrates the number of jurors struck by the state
+  ggplot(aes(x = defendant_race, fill = juror_race)) + geom_bar(position = "dodge") + labs(title = "Count of Jurors Struck by the State", y = "# of Jurors Struck", x = "Race of the Defendant", subtitle= "Categorized by the race of the defendant") + scale_fill_discrete(name = "Race of Juror") + geom_text(stat='count', aes(label=..count..), position=position_dodge(1),vjust=2)
+```
+
+In an attempt to visualize the data we were looking at, we created a side by side bar chart of the people who were struck by the state (see figue above).  We grouped all these jurors by their race, and then grouped them again by the defendant’s race.  Our graph shows that race definitely plays a role in whether juror gets struck or not.  There were 33 black jurors struck and 30 white jurors struck for trials with a white defendant.  These numbers are very close to each other and it could be that race does not have a significant effect in the Fifth Circuit Court District of Mississippi.  However, there was a much larger discrepancy between races for cases with a black defendant.  There were 63 white jurors struck in this scenario and 186 black jurors who were struck!  This graph shows that this court definitely used race as a factor for jury selection when the defendant is black.
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE}
+props %>%
+#filtering props data to include only white and black defendants and white and black jurors that were struck by the state
+  filter(defendant_race == c("White","Black")) %>%
+  filter(juror_race == c("White", "Black")) %>%
+  filter(struck_by == "Struck by the state") %>%
+#collapse data set to be grouped by the trial ID
+  group_by(trials_id) %>%
+#creating scatterplot that shows the differences in rates of black jurors struck and white jurors struck
+  ggplot(aes(x = trials_id, y = dif_prop, color = defendant_race)) + geom_point(position = "jitter") + geom_hline(yintercept = 0, linetype = "dashed", color="indianred1") + labs(title = "Differences in Rates of Black Jurors Struck vs White Jurors Struck", x = "Trial ID", y = "Difference in Striking Rates") + scale_fill_discrete(name = "Race of Defendant")
+```
+
+We also created a scatterplot of the difference in proportions between black and white jurors who were struck by the state for all 157 trials (see figue above).  Positive numbers show that there was a higher percentage of black jurors struck then white jurors.  We can see that a large majority of trials had more black people struck than white people.  Also, in the rare cases where a higher percentage of white jurors were struck by the state, there were only slightly more white jurors struck than black jurors.  For cases where the proportion of black jurors struck by the state were higher than white jurors, a lot of them had a difference of over 50 percentage points, which is large difference.  The scatterplot also shows that the bulk of the trials with a big disparity between the proportions of white and black jurors struck had a black defendant.  Both of our graphics show that race was a factor for jury selection in the Fifth Circuit Court District of Mississippi during Evans’ tenure.
