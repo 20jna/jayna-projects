@@ -1,0 +1,71 @@
+---
+title: "Fitting Bayesian Reg Models (in class)"
+author: "Jay Na"
+date: "11/4/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(rjags)
+homes <- read.csv("http://aloy.rbind.io/data/homes.csv")
+```
+
+```{r}
+homes.std <- scale(homes)
+
+Y <- homes.std[,1]
+X <- homes.std[,c("temp","precip")]
+
+n <- length(Y)
+p <- ncol(X) + 1
+X <- cbind(1,X)
+
+data <- list(Y=Y, X=X, n=n, p=p)
+params <- c("beta","sigma")
+
+burn <- 10000
+n.iter <- 20000
+thin <- 10
+n.chains <- 1
+
+reference_string <- textConnection("model{
+      for (i in 1:n){
+      Y[i] ~ dnorm(inprod(X[i,], beta[]), taue)
+      }
+      
+      for (j in 1:p){
+      beta[j] ~ dnorm(0, 1/pow(10,3))
+      }
+      
+      taue ~ dgamma(0.001,0.001)
+      sigma <- 1/sqrt(taue)
+      }")
+
+model <- jags.model(reference_string, data = data, n.chains = 1)
+
+update(model, 1000)
+
+samples <- coda.samples(
+  model, 
+  variable.names = c("beta", "sigma"), 
+  n.iter = 10000, 
+  progress.bar = "none"
+)
+
+par(mar = c(3,2,1,1))
+
+plot(samples)
+```
+
+```{r}
+temp_grid <- seq(-3,3,by=.01)
+beta_draws <- post_samples[[1]][,-4]
+mu_link <- function(temp,precip){
+  beta_draws[,1] + beta
+}
+```
+
