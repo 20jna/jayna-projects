@@ -1,0 +1,32 @@
+---
+title: "Team hw1 - Team 14"
+author: "Natalie Maurice and Jay Na"
+date: "1/29/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(forcats)
+library(Lahman)
+```
+
+For our data set, we wanted to analyze something that we both found interest in, sports. We chose to look further into the Lahman library for our graphic because it contained multiple complex data sets, one of which details one of the biggest aspects of baseball, batting. We wanted to focus on the number of total hits for both divisions in the MLB to see if there is any specific trends to see if one league has proven to outperform the other over a period of time. As seen in the graph below, there are no outgoing trends that can help predict what may happen in the years to come. However, what we can see is the progression of each league’s number of hits and also how they compare to each other year after year, which can be a factor in the postseason, since the All-Star game, where the best players from each league play against each other, decides which league division will get home advantage during the World Series.
+
+```{r}
+Batting%>%
+  filter(yearID == c(2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016)) %>%
+  group_by(yearID, lgID) %>%
+  summarize(total = sum(H)) %>%
+  ggplot(aes(x=yearID, y=total, color = lgID)) +
+  geom_line() +
+  geom_point() +
+  labs(x="Years", y="Hits", title = "MLB Divisions Hits per Year (2006-2016)", color = "League") + 
+  scale_color_manual(values = c("firebrick2", "navy")) +
+  scale_x_continuous(breaks = c(2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016)) +
+  theme_minimal() +
+  theme()
+```
+
+The above graphic shows the total number of hits in each MLB division over the past 10 years. It can easily be seen that the league that has more hits is constantly changing in the early years. Then, in the last 3 years (2014-16) there has been a slight consistancy of having more hits in the NL. This is especially interesting when thinking about how the two leagues are structured. The AL allows teams to have designated hitter (DH) whose hits for the worst hitter on the team, the pitcher. On the other hand, in the NL the pitcher must hit and no hitting specific player is present. In theory, this would cause the AL to have a higher number of hits, but as this graphic shows this is not always the case. Over the past 3 years, where there has been an increased focus on hitting league wide, it makes it even more interesting that the NL hits numbers are higher because AL teams do have the advantage with the use of the DH.
