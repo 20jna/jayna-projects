@@ -1,0 +1,103 @@
+---
+title: "Math 255 - Homework 9"
+author: "Jay Na worked w/ Aaron, Dylan, Christian"
+date: "Due in class, Wednesday, May 29"
+output: pdf_document
+---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, prompt=TRUE, comment=NULL,tidy.opts=list(width.cutoff=60),tidy=TRUE,eval=TRUE)
+```
+
+```{r, message=FALSE}
+library(SDaA)
+library(survey)
+```
+
+**The finalized version.**
+
+### Problem 1
+(separate sheet)
+
+### Problem 2
+(separate sheet)
+
+### Problem 3
+**(a)**
+The total estimate number of farms in 1992 is 1,549,517 farms with a SE of 354,030.
+```{r}
+agpps <- read.csv("http://math.carleton.edu/kstclair/data/agpps.csv")
+
+n <- 15
+incl.matrix <- as.matrix(agpps[,10:24])
+diag(incl.matrix) <- agpps$pii
+
+aggps.design <- svydesign(id=~1, fpc=~pii, data = agpps, pps = ppsmat(incl.matrix))
+
+svytotal(~farms92, aggps.design, deff=T)
+```
+
+**(b)** The total estimate for the SRS is 1,843,907 farms, which larger than my estimates from (a). The SE of the SRS is 67,908 farms, which is much smaller than the SE from part (a). The unequal probability sample was more precise than the SRS when estimating total `acres92` because it is highly correlated wtih `acres87`. Since the variables are of different units when estimating total `farms92`, there is a much lower correlation and so it is less precise than the SRS.
+
+```{r}
+agsrs$n <- nrow(agsrs)
+agsrs$N <- 3078
+agsrs$wts <- agsrs$N/agsrs$n
+
+agsrs.design <- svydesign(id=~1, fpc=~N, weights=~wts, data=agsrs)
+
+svytotal(~farms92, agsrs.design)
+```
+
+### Problem 4
+
+**(a) (b) (c) (d) on separate sheet**
+
+**(e)** The SE of the H-T estimate is 67908.
+```{r}
+incl.matrix <- matrix(c(0.899, 0.602, 0.149, 0.602, 0.980, 0.249, 0.149, 0.249, 0.590), 
+nrow = 3, byrow = T)
+```
+
+### Problem 5
+
+**(a)** (separate sheet)
+
+**(b)** The estimate total number is 25874 birds with a SE of 17359. the 95% CI is (-22323.49, 74071.9). The true population total is 14121 birds, which fits within the interval.
+```{r}
+(net1.total <- 3 + 5 + 24 + 14 + 2 + 3 + 2)
+(net2.total <- 10 + 103 + 13639 + 1 + 14 + 122 + 177)
+
+set.seed(3256)
+sample(1:50, 5, replace=FALSE)
+  
+bw.data <- data.frame(y_net = c(53, 0, 14066, 0), x_net= c(7, 1, 7, 1))
+
+n1 <- 5
+N <- 50
+bw.data$ip1 <- (1- choose(N - bw.data$x_net,n1)/choose(N,n1))
+
+jnt.func <- function(xj, x=bw.data$x_net, N=50, n1=5){ 
+    1- choose(N - xj,n1)/choose(N,n1) - 
+    choose(N - x,n1)/choose(N,n1) + 
+    choose(N-xj-x,n1)/choose(N,n1)
+  }
+```
+
+```{r}
+jnt.matrix <- matrix(c(jnt.func(bw.data$x_net[1]), jnt.func(bw.data$x_net [2]),
+                       jnt.func(bw.data$x_net[3]), jnt.func(bw.data$x_net[4])),
+                     nrow=4, byrow = TRUE)
+
+diag(jnt.matrix) <- bw.data$ip1
+
+bluewing_design <- svydesign(id = ~1, fpc= ~ip1, pps=ppsmat(jnt.matrix), data= bw.data)
+
+(est.total <- svytotal(~y_net, bluewing_design))
+
+confint(est.total, df = 4)
+
+(true.total <- net1.total + net2.total + 2)
+```
+
+
