@@ -1,0 +1,95 @@
+---
+title: 'HW #10'
+author: "Jay Na"
+date: "5/30/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message=FALSE}
+library(tidyverse)
+```
+
+**1. Exercise 10.6.**
+
+**a)** The apparent relationship is that cereal targeted for children were either mostly in the middle or at the bottom selves wheras the cereal targeted for adults were mostly on the top shelf. 
+```{r, fig.height=5, fig.width=5}
+data(Cereals, package = "resampledata")
+
+(cereal.table <- table(Cereals$Age, Cereals$Shelf))
+
+ggplot(Cereals, aes(x=Age, fill=Shelf)) + geom_bar(position="fill") + labs(y="Proportion", title = "Age vs Shelf of Obs Cereal")
+```
+
+**b)** 
+```{r}
+chisq.test(cereal.table)
+```
+
+**c)**
+```{r}
+chisq.test(cereal.table)$expected
+```
+
+**d)** With a p-value of 1e-05, we can conclude that there is a strong association between age of target consumer and shelf location.
+```{r}
+chisq.test(cereal.table, simulate.p.value = TRUE, B = 1e5)
+```
+
+
+**2. Exercise 10.14.**
+
+With a P-value of 0.072, it is plausible that these numbers were drawn from the distribution given.
+```{r}
+B <- 1e5
+
+obs1 <- 30
+obs2 <- 18
+obs3 <- 9
+obs4 <- 10
+obs5 <- 3
+  
+int1 <- 5/9
+int2 <- 7/36
+int3 <- 5/36
+int4 <- 16/225
+int5 <- 1 - (int1+int2+int3+int4)
+                      
+exp1 <- int1*70
+exp2 <- int2*70
+exp3 <- int3*70
+exp4 <- int4*70
+exp5 <- int5*70
+
+obs <- c(obs1, obs2, obs3, obs4, obs5)
+incl_prob <- c(int1, int2, int3, int4, int5)
+expected <- c(exp1, exp2, exp3, exp4, exp5)
+
+(c <- sum((obs-expected)^2/expected))
+
+pchisq(c, df = 4, lower.tail=FALSE)
+```
+
+
+**3. Exercise 10.18.**
+
+The data are not consisent with a Poisson process, according to the goodness-of-fit test, which gives us a large C value.
+```{r}
+data(Phillies2009, package = "resampledata")
+lambda_hat <- mean(Phillies2009$Doubles)
+
+n <- dim(Phillies2009)[1]
+
+probs <- c(dpois(0:4, lambda = lambda_hat),
+             1-ppois(4, lambda = lambda_hat))
+expected <- n*probs
+
+round(expected,0)
+
+(C <- sum((Phillies2009$Doubles-expected)^2/expected))
+```
+
+
