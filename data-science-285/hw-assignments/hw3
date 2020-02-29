@@ -1,0 +1,391 @@
+---
+title: "Homework 3"
+author: "Jay Na"
+date: "Due by 1:50 pm, Fri. 2/1"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, error = TRUE)
+```
+
+
+Push your knitted homework assignment (.Rmd and .md files) to GitHub by the given deadline.
+
+Also let me know: 
+
+**Who you worked with:**
+
+Aaron Prentice
+
+### Problem 1: explain command (no R needed)
+
+Consider the data set shown in the table below. Each row represents a `class`: `S` denotes a statistics class and `C` denotes a CS class. The variable `m` counts the number of mac users in the class and `w` counts the number of windows users. 
+
+class  | m | w 
+------ | -- | --
+C | 10 | 4
+C | 3 | 1
+C | 7 | 3
+S | 2 | 7
+S | 7 | 10
+
+What data set will be produced by the following commands? Describe the data set in words and show what it looks like using an R Markdown table (like the one used above) to display the new data set. Assume the original data set is named `mydata`.
+
+**a.**
+```{r, eval=FALSE}
+mydata %>% 
+  filter(class == "C") %>%
+  select(w, m)
+```
+
+This code will produce a data set showing the corresponding two of the columns, `m` & `w`, where the class was a CS class.
+
+m | w 
+-- | --
+10 | 4
+3 | 1
+7 | 3
+2 | 7
+7 | 10
+
+```diff
++ m | w 
++ -- | --
++ 10 | 4
++ 3 | 1
++ 7 | 3
+```
+
+**b.**
+```{r, eval=FALSE}
+mydata %>% 
+  mutate(ratioW = w / sum(w))
+```
+
+This code will produce the same data set with an additional column named `ratioW` giving the proportions of window users for each class out of the total number of window users.
+
+class  | m | w | ratioW
+------ | -- | -- | --
+C | 10 | 4 | 0.16
+C | 3 | 1 | 0.04
+C | 7 | 3 | 0.12
+S | 2 | 7 | 0.28
+S | 7 | 10 | 0.4
+
+**c.** 
+```{r, eval=FALSE}
+mydata %>% 
+  group_by(class) %>%
+  mutate(ratioW = w / sum(w))
+```
+
+This code will contain a data set where there are only two rows for class, `C` and `S`. The `m` and `w` will give the total number of mac users and the total number of window users respectively for CS classes and statistics classes. Lastly, the data set will have an additional column named `ratioW` giving the proportions of window users for both classes out of the total number of window users.
+
+class  | m | w | ratioW
+------ | -- | -- | --
+C | 20 | 8 | .32
+S | 9 | 17 | .68
+
+```diff
++ The sum(w) denominator equals the sum of w for each classType group. The total for C classes is 8 windows users in all CS classes listed and for S classes is 17 windows users in stats classes. ratioW records the proportion of all windows users in a given class type (CS or stats) who are in a specific class.
+
++ class | m | w | ratioW
++ ------ | -- | -- | ----
++ C | 10 | 4 | 0.50 
++ C | 3 | 1 | 0.125
++ C | 7 | 3 | 0.375
++ S | 2 | 7 | 0.412
++ S | 7 | 10 | 0.588
+```
+
+**d.** 
+```{r, eval=FALSE}
+mydata %>% 
+  group_by(class) %>%
+  summarize(Y = sum(w + m))
+```
+
+This code will contain one column titled `Y` that gives the total number of users.
+
+| Y |
+| -- |
+| 54 |
+
+```diff
++ We are grouping by class then summarizing the class totals w + m with the sum function. This will produce a small data frame that gives the total number of CS and stats students.
+
++ class | Y
++ ----- | --
++ C | 28
++ S | 26
+```
+
+**e.**
+```{r, eval=FALSE}
+mydata %>% 
+  group_by(class) %>%
+  mutate(X = w + m, Y = sum(w + m))
+```
+
+This code will contain a data set where there are only two rows for class, `C` and `S`. The `m` and `w` will give the total number of mac users and the total number of window users respectively for CS classes and statistics classes. The data set will that have two more columns, one named `X` that gives the total numbers of users for that particular class, and the other named `Y`, which gives the total number of users in all. 
+
+class  | m | w | X | Y
+------ | -- | -- | -- | --
+C | 20 | 8 | 28 | 54
+S | 9 | 17 | 26 | 54
+
+```diff
++ We are grouping by class which will only effect the output for any command that summarizes variables like sum. The mutate command preserves the original data frame and adds the variable X that records the total number of mac and windows users in a given class (row). The Y variable sums the values of X for all entries in each classType (grouping variable). These values are repeated (28 CS students and 26 stats students) for all classes in each class.
+
++ class | m | w | X | Y
++ ------ | -- | -- | -- | --
++ C | 10 | 4 | 14 | 28
++ C | 3 | 1 | 4 | 28
++ C | 7 | 3 | 10 | 28
++ S | 2 | 7 | 9 | 26
++ S | 7 | 10 | 17 | 26
+```
+
+```diff
++ please review the difference between summarize() and mutate()
+```
+
+### Problem 2: explain error (no R needed)
+Consider the data set in given in Problem 3. Explain why the following command (similar to parts a and b above) will produce an error message.
+
+```{r, eval=FALSE}
+mydata %>% 
+  group_by(class) %>%
+  summarize(X = w + m, Y = sum(w + m))
+```
+
+This command will produce an error message because the `summarize()` command can only produce a summary for a single categorical variable at a time, which means it would not be able to sum two numbers of different categorical variables and still form a summary, in this case two summaries. 
+
+
+### Problem 3 (give command, no R needed)
+Consider the data set in given in Problem 3. Provide the `dplyr` commands that will produce the following data frames:
+
+**a.** Adds the proportion of windows users in each class to the original data frame. 
+
+```{r, eval=FALSE}
+mydata %>% 
+  mutate(classratioW = w /(w+m))
+```
+
+**b.** Gives the `class` and the proportion of windows users among all students within each `class`.  
+
+```{r, eval=FALSE}
+mydata %>% 
+  group_by(class) %>%
+  mutate(ratioW = w /(w+m)) %>%
+  select(class, ratioW)
+```
+
+```diff
++ mydata %>% 
++ group_by(classType) %>%
++ summarize(Y = sum(w)/sum(w+m))
+```
+
+### Problem 4: joins (I am assuming that Stud_Id and ID were not meant to be capitalized in problem)
+
+The data set below called `students` contains information on five students with their ID number, first name and computer preference.
+
+id | name | computer
+-- | ---- | -----
+1 | Arya | m
+2 | Gregor | m
+3 | Cersei | w
+4 | Jon | m
+5 | Jon | w
+
+The data set below called `classes` contains the roster information (student first name and ID) for two classes. 
+
+class | student | stud_id
+------ | -- | --
+CS | Jon | 4
+CS | Arya | 1
+CS | Cersei | 3
+Stats | Gregor | 2
+Stats | Jon | 4
+Stats | Jon | 5
+Stats | Arya | 1
+
+What data set will be produced by the following commands? Describe the data set in words and show what it looks like using an R Markdown table to display the new data set. 
+
+**a.**
+```{r, eval=FALSE}
+left_join(Classes, Students, by=c("Stud_Id" = "Id"))
+```
+
+This command would print the `classes` data set with two additional columns, `name` and `computer` from the `student` data where the `id` was the same as the `stud_id`.
+
+class | student | stud_id | name | computer
+------ | -- | -- | -- | -- 
+CS | Jon | 4 | Jon | m
+CS | Arya | 1 | Arya | m
+CS | Cersei | 3 | Cersei | w
+Stats | Gregor | 2 | Gregor | m
+Stats | Jon | 4 | Jon | m
+Stats | Jon | 5 | Jon | w
+Stats | Arya | 1 | Arya | m
+
+**b.** 
+```{r, eval=FALSE}
+CS <- Classes %>% filter(Class == "CS")
+Stats <- Classes %>% filter(Class == "Stats")
+semi_join(Stats, CS, by = "Stud_Id")
+```
+
+This command will give the data set that includes only the students that were in both CS and Stats. The data set will include their `class`, which in this case would be the x-variable `Stats` in the `semi_join()` command, and `name` then their `stud_id`, similar to the original data set. 
+
+class | student | stud_id
+------ | -- | --
+Stats | Jon | 4
+Stats | Arya | 1
+
+**c.**
+```{r, eval=FALSE}
+anti_join(Stats, CS, by = "Stud_Id")
+```
+
+This command will give the data set that includes only the students that were in Stats but not in CS. The number and order of the categorical variables remain the same as the original. 
+
+class | student | stud_id
+------ | -- | --
+Stats | Gregor | 2
+Stats | Jon | 5
+
+
+### Problem 5: restaurant violations
+Exercise 4.17. Use `dplyr` package and both `point` and `smooth` geometries in your graph used to see patterns between number of inspections and median score.
+
+Hint: You'll need to use `na.rm = TRUE` to compute the median or an `na.omit()` command when wrangling the data. If you use `na.omit()`, make sure you've `select()`ed only the key variables needed in your analysis. You don't want to omit a row with an `NA` if it occurs in a variable you aren't using.
+
+```{r}
+library(tidyverse)
+library(mdsr)
+
+violate <- Violations %>%
+    filter(boro == "MANHATTAN") %>%
+    group_by(zipcode, score) %>%
+    summarise(zip = count(zipcode)) %>%
+    filter(zip > 50) %>%
+    summarize(inspect_count = sum(zip), median = median(score, na.rm = TRUE))
+
+ggplot(violate, aes(inspect_count, median)) + geom_point() + geom_smooth() + labs(title = "Restaurant Inspection Scores in Manhattan", x = "Number of Inspections by Zipcode", y = "Median Inspection Scores")
+
+```
+
+The relationship between the number of inspections is quite strong, positive, which meant that the more inspections a zipcode had, the higher the inspection score was.
+
+### Problem 6: flights
+
+In this problem you will explore all domestic flights leaving George Bush Intercontinental Airport (IAH) in Houston in 2011. There are 5 data sets to consider:
+
+* `flights` [227,496 x 14]: Flight data.
+* `weather` [8,723 x 14]: Hourly weather data.
+* `planes` [2,853 x 9]: Plane metadata.
+* `airports` [3,376 x 7]: Airport metadata.
+* `states` [48 x 3]: (Lower 48) state data.
+
+Load the data using the following code:
+
+```{r}
+flights <- read_csv("data/flights.csv") %>% 
+  mutate(date = as.Date(date))
+weather <- read_csv("data/weather.csv") %>% 
+  mutate(date = as.Date(date))
+planes <- read_csv("data/planes.csv")
+airports <- read_csv("data/airports.csv")
+states <- read_csv("data/states.csv")
+```
+
+
+**a.** Plot a "time series" of the proportion of flights that were delayed by > 30 minutes on each day.  i.e.
+ 
+* the x-axis should be some notion of time
+* the y-axis should be the proportion.
+
+```{r}
+flight30 <- flights %>%
+    select(date, flight, dep_delay) %>%
+    group_by((date)) %>%
+    mutate(prop = count(dep_delay >30)/(sum(flight)))
+              
+
+ggplot(flight30, aes(x = date, y = prop)) + geom_line() + geom_smooth() + labs(title = "Proportions of Flights Delayed for Greather Than 30 Minutes (2011)", x = NULL, y = "Proportion of Flights Delayed >30 min")
+```
+
+
+Using this plot, describe when delays over 30 minutes tend to occur.
+
+From this graph, we can infer that delays over 30 minutes tend to rise in April and reaches its peak proportion of flights in July (summertime). The proportion of >30 delays decrease during the fall and rise again at the end of the year. 
+
+**b.** Some people prefer flying on older planes.  Even though they aren't as nice, they tend to have more room.  Which airlines should these people favor?
+
+```{r}
+flightsolder <- flights %>%
+                  select(plane, carrier, flight)
+planesolder <- planes %>%
+                  select(plane, year)
+olderp <- left_join(flightsolder, planesolder, by = "plane")
+
+olderp2 <- olderp %>%
+              group_by(carrier) %>%
+              summarize(AverageYear = mean(year, na.rm = TRUE)) %>%
+              arrange(desc(AverageYear))
+print(olderp2)
+```
+
+People who prefer flying on older planes should favor the DL, AA, MQ carriers, which have flights that are from, on average, before the 2000s and have the lowest average years. B6, AS, OO, EV are the carriers that have on average the youngest planes flying and should be the ones to avoid. 
+
+```diff
++ you can just call your object `olderp2` directly to print out the result without using the print() function
+```
+
+**c.** 
+
+* What states did Southwest Airlines' **flight paths** tend to fly to?
+```{r}
+fsa <- airports %>%
+          mutate(dest = iata) %>%
+          inner_join(flights, airports, by = "dest") %>%
+          filter(carrier == "WN") %>%
+          group_by(state) %>%
+          summarise(count = count(flight)) %>%
+          arrange(desc(count))
+print(fsa)
+```
+
+* What states did Southwest Airlines' **flights** tend to fly to?
+```{r}
+fpath <- airports %>%
+          mutate(dest = iata) %>%
+          inner_join(flights, airports, by = "dest") %>%
+          filter(carrier == "WN") %>%
+          group_by(state) %>%
+          summarise(count = count(state)) %>%
+          arrange(desc(count))
+print(fpath)
+```
+
+For example, Southwest Airlines Flight 60 to Dallas consists of a single flight
+path, but since it flew 299 times in 2013, it would be counted as 299 flights.
+
+
+Southwest Airlines' flight paths tend to fly to TX, MD, MS, NV, OK and its flights tend to fly to TX, FL, LA, CA, OK.
+
+**d.**  I want to know proportionately what regions (NE, south, west, midwest) each carrier flies to/from Houston in the month of July.
+
+```{r}
+hjflight <- airports %>%
+            mutate(dest = iata) %>%
+            inner_join(flights, airports, by = "dest") %>%
+            inner_join(., states, by ="state") %>%
+            filter(date == "2011-07-01") %>%
+            group_by(carrier, region) %>%
+            summarize(fromHouston = count(city == "Houston"), n = n(), prop = fromHouston/n)
+print(hjflight)
+```
