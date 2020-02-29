@@ -1,5 +1,12 @@
 # jayna-projects
-Jay Na's Repository of Past Work & Projects
+*Jay Na's Repository of Past Work & Projects*
+
+Objective:
+
+- Continue to grow my understanding of statistical analyses and its real-world applications, especially in the fast-moving tech sector
+
+- Develop my experience in user acquisition and growth by continuing to take advantage of my statistical and team-oriented background and strong work ethic
+
 
 Technical Skills: 
 
