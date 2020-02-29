@@ -1,0 +1,36 @@
+---
+title: "Math 275 HW#6"
+author: "Jay Na"
+date: "4/28/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+hops <- read.csv("http://people.carleton.edu/~apoppick/ClassData/hops.csv", header = TRUE)
+
+p <- 1/mean(hops$hops)
+```
+
+**4b)** The standard error using the Fisher information is 0.0252.
+```{r}
+(SE1 <- sqrt((p^2*(1-p))/130))
+```
+
+**c)** The standard error using a bootstrap is 0.0265 which is slightly higher than the standard error using the Fisher information but is relatively similar.
+```{r}
+set.seed(1244321)
+N <- 10000
+bootData <- numeric(N)
+
+for (i in 1:N) {
+  bootSample <- sample(hops$hops, replace = TRUE)
+  bootData[i] <- 1/mean(bootSample)
+}
+
+(SE2 <- sd(bootData))
+```
+
