@@ -1,0 +1,100 @@
+---
+title: 'HW #7'
+author: "Jay Na"
+date: "10/11/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(MCMCpack)
+library(tidyverse)
+```
+
+**1.**
+
+**a.)**
+```{r, fig.width = 3.5, fig.height = 3.5}
+insects <- read.csv("http://aloy.rbind.io/data/insects.csv")
+
+ys <- insects$n
+
+pos_grid <- expand.grid(a = seq(0.001, 1, by=.001), 
+                        b = seq(0.001, 1, by=.001)
+                        )
+
+log_prior_func <- function(a,b){
+    return(log(1/((a*b)^2)))
+}
+
+log_likelihood_func <- function(a,b,y){
+  likelihood <- sum(log(gamma(y+a)/gamma(a)*factorial(y)*(b^a)/(b+1)^(y+a)))
+}
+
+log_priors <- log_prior_func(pos_grid$a, pos_grid$b)
+log_likelihoods <- rep(NA, length(pos_grid$a))
+
+for (i in 1:length(pos_grid$a)){
+  log_likelihoods[i] <- log_likelihood_func(pos_grid$a[i], pos_grid$b[i], ys)
+}
+
+log_post <- log_priors+log_likelihoods
+unnorm_post <- exp(log_post)
+posterior <- unnorm_post/sum(unnorm_post)
+```
+
+```{r}
+plot(posterior, type = "l", main = "Posterior Density DSN")
+```
+
+```{r, fig.width = 3.5, fig.height = 3.5}
+posterior_draws <- sample_n(pos_grid, size=1000, replace = TRUE, weight = posterior)
+```
+
+**b.)** The 90% interval estimate for alpha is estimately (.431, .981) and the 90% interval estimate for beta is estimately (.207, .681).
+```{r}
+quantile(posterior_draws$a, probs = c(0.05,0.95))
+quantile(posterior_draws$b, probs = c(0.05,0.95))
+```
+
+**2.**
+
+**a.) and b.) on separate page**
+
+**c.)**
+```{r}
+set.seed(1234)
+nN <- 1601 + 162527
+yN <- 1601
+
+nS <- 510 + 412368
+yS <- 510
+
+pN <- rbeta(1000, yN+1, nN-yN+1)
+pS <- rbeta(1000, yS+1, nS-yS+1)
+```
+
+**d.)** The 95% interval estimate is (7.132, 8.730).
+```{r, fig.width = 3.5, fig.height = 3.5}
+rr <- pN/pS
+
+hist(rr, main = "Relative Risk Density", xlab = "pN/pS")
+
+quantile(rr, probs = c(0.025,0.975))
+```
+
+**e.)**
+```{r, fig.width = 3.5, fig.height = 3.5}
+diff <- pN - pS
+
+hist(diff, main = "Diff in Risk Density", xlab = "pN-pS")
+```
+
+**f.)** The posterior probability that the diff in risks exceeds 0 is 1.
+```{r}
+mean(diff>0)
+```
+
