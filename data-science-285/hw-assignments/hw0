@@ -1,0 +1,239 @@
+---
+title: "Homework 0"
+author: "Jay Na"
+date: "Due by 1:50 am, Wed. 1/9"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, error = TRUE)
+```
+
+## To Do: Complete before Wednesday's class (1/9)
+Use full sentences to answer the questions below if you are asked for an *answer* or *explanation*. You should be able to complete questions with a little review of intro stats R commands.
+
+Push your knitted homework assignment (.Rmd and .md files) to GitHub by the given deadline. Also let me know: 
+
+**Who you worked with:**
+
+## Loading packages
+
+**1.**  Load the `tidyverse` in the code chunk below.
+
+```{r}
+library(tidyverse)
+```
+
+* * *
+
+## Exploring data
+
+
+**Data description.** The data for this review example is a "classic" German credit data set. Each entry in the data set represents a loan given by the bank, along personal characteristics of the person the loan was given to, the type of loan and whether or not they paid it off or defaulted. At the time, the Deutsche mark was the unit of currency so an "DM" in the data set refers to that unit of measurement. One of the main questions about this data set is to understand factors associated with a loan defaulting (or not). In this data set the variable `Good.Loan` indicates whether a loan was paid off (`GoodLoan`) or whether it defaulted (`BadLoan`).
+
+Since you have loaded the `tidyverse`, you can use the `read_csv()` command to load the  data set:
+
+```{r}
+loans <- read.csv("http://people.carleton.edu/~kstclair/data/day1CreditData.csv")
+```
+
+Once you have loaded the data, use `glimpse()` to make sure that it looks OK:
+
+```{r}
+glimpse(loans)
+```
+
+
+**2.** How many loan cases are in the data? How many variables?
+
+```{r}
+
+```
+
+*Answer:* There are 700 loan cases and 21 variables
+
+<span style="color:red">grader: try use `dim(loans)` or `nrow(loans)` or `ncol(loans)`</span>
+
+**3.** What percentage of loans in this data set defaulted?
+
+```{r}
+table(loans$Good.Loan)/700 
+```
+
+*Answer:* Write your answer as text here.
+
+Estimately 31.14% of loans in this data set defaulted.
+
+<span style="color:red">grader: can also try `prop.table(table(loans$Good.Loan))`</span>
+
+**4.** What is the average loan duration in this data set?
+
+```{r}
+sum(loans$Duration.in.month)/700 
+```
+
+*Answer:* Write your answer as text here.
+
+The average loan duration in this data set is estimately 20.79 months.
+
+<span style="color:red">grader: try `mean(loans$Duration.in.month)`</span>
+
+* * * 
+
+## Manipulating vectors
+
+The `letters` vector is a vector of all lowercase letters of the alphabet.
+
+**2.**  Determine the length of the `letters` vector.
+
+```{r}
+# SOLUTION: 
+
+length(letters)
+
+```
+
+
+**3.**  Select the 13th letter of the alphabet.
+
+```{r}
+# SOLUTION:
+
+letters[13]
+
+```
+
+
+**4.**  Select the 17th through 21st letters of the alphabet.
+
+```{r}
+# SOLUTION:
+
+letters[c(17:21)]
+
+```
+
+* * *
+
+## Applying functions to vectors
+
+Define the vector `x` to have values 3.2,  9.1,  4.3,  3.6,  8.9 (in that order).
+
+
+**5.**  Create the vector `x`.
+
+```{r}
+# SOLUTION:
+
+x <- c(3.2, 9.1, 4.3, 3.6, 8.9)
+
+```
+
+
+**6.** Run the command `floor(x)`. Show the output and explain the behavior of the function in your own words.
+
+```{r}
+# SOLUTION:
+
+print(floor(x))
+
+```
+
+*Explanation:* 
+
+The floor function gives the closest integer for each value that is equal or less than the value in the vector x. 
+
+<span style="color:red">grader: you do not need to use the `print` function</span>
+
+**7.** Run the command `ceiling(x)`. Show the output and explain the behavior of the function in your own words.
+
+```{r}
+# SOLUTION:
+
+print(ceiling(x))
+
+```
+
+*Explanation:* 
+
+The ceiling function gives the closest integer for each value that is equal or more than the value in the vector x.
+
+**8.**  Run the command `round(x)`. Show the output and explain the behavior of the function in your own words.
+
+```{r}
+# SOLUTION:
+
+print(round(x))
+
+```
+
+*Explanation:* 
+
+The round function gives the rounded integer for each value in the vector x.
+
+**9.**  Run the command `abs(x)`. Show the output and explain the behavior of the function in your own words.
+
+```{r}
+# SOLUTION:
+
+print(abs(x))
+
+```
+
+*Explanation:* 
+
+The abs function gives the absolute value for each value in the vector x. 
+
+**10.** Run the command `min(x)`. Show the output and explain the behavior of the function in your own words.
+
+```{r}
+# SOLUTION:
+
+print(min(x))
+
+```
+
+*Explanation:*
+
+The min function gives the minimum value in the vector x.
+
+**11.** Run the command `max(x)`. Show the output and explain the behavior of the function in your own words.
+
+```{r}
+# SOLUTION:
+
+print(max(x))
+
+```
+
+*Explanation:* 
+
+The max function gives the minimum value in the vector x.
+
+<span style="color:red">grader: gives the maximum value </span>
+
+**12.** Run that command `which.min(x)`. Show the output and explain the behavior of the function in your own words.
+
+```{r}
+# SOLUTION:
+
+print(which.min(x))
+
+```
+
+*Explanation:* 
+
+The which.min function gives the index number of the minimum value in the vector x.
+
+**13.** Run the command `which.max(x)`. Show the output and explain the behavior of the function in your own words.
+
+```{r}
+# SOLUTION:
+
+print(which.max(x))
+
+```
+
+*Explanation:* 
+
+The which.max function gives the index number of the maximun value in the vector x.\
