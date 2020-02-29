@@ -1,0 +1,225 @@
+---
+title: "Earthquakes Simulation"
+author: "Pierce McDonnell and Jay Na"
+date: "5/9/2019"
+output:
+  html_document: default
+---
+
+```{r earthquakes1}
+
+earthquakes <- read.csv('http://people.carleton.edu/~apoppick/ClassData/earthquakes.csv', 
+header = TRUE)
+set.seed(1998)
+
+# fix values of y_m, alpha, and n
+y_m <- min(earthquakes$MAGNITUDE) # minimum data value
+alpha <- 10 # shape parameter
+n <- length(earthquakes$MAGNITUDE) # sample size
+
+# initialize vectors
+alpha_hatMLE <- numeric(1000)
+alpha_hatMOM <- numeric(1000)
+exact.lower <- numeric(1000)
+exact.upper <- numeric(1000)
+CLT.lower <- numeric(1000)
+CLT.upper <- numeric(1000)
+bootMLE.lower <- numeric(1000)
+bootMLE.upper <- numeric(1000)
+bootMOM.lower <- numeric(1000)
+bootMOM.upper <- numeric(1000)
+
+```
+
+```{r earthquakes2,3,4,5}
+
+set.seed(1998)
+
+for (k in 1:1000) {
+  
+  # Step 2: Take a sample of n iid Pareto(y_m, alpha) RVs by using the
+  # result from derivations part (a)
+    X <- rexp(n, rate = alpha) # Exp(alpha) random variables
+    Y <- y_m * exp(X) # Pareto(y_m, alpha) random variables
+  
+  # Step 3: For this sample, compute and store the MLE and MOM estimate of alpha
+    alpha_hatMLE[k] <- n / sum(log(Y / y_m)) # MLE formula
+    alpha_hatMOM[k] <- mean(Y) / (mean(Y) - y_m) # MOM formula
+  
+  # Step 4: For this sample, compute 95% confidence intervals for alpha using four competing methods
+    # based on exact MLE CI (part d)
+      exact.lower[k] <- qgamma(0.025, shape = n, rate = 1) / sum(log(Y / y_m))
+      exact.upper[k] <- qgamma(0.975, shape = n, rate = 1) / sum(log(Y / y_m))
+    
+    # based on t distribution CI (part e)
+      y_bar <- n / sum(log(Y/y_m))
+      s <- sqrt((1/(n-1)) * sum(1 / (log(Y/y_m) - y_bar )^2 ))
+      CLT.lower[k] <- y_bar - qt(0.975, n-1) * s/sqrt(n)
+      CLT.upper[k] <- y_bar + qt(0.975, n-1) * s/sqrt(n)
+    
+    # based on the bootstrap percentile method applied to the MLE
+      X_star1 <- numeric(1000)
+     
+      for (j in 1:1000) {
+        bootSamp <- sample(Y, replace=TRUE)
+        X_star1[j] <- 1/mean(log(bootSamp/y_m))
+      }
+
+      bootMLE.lower[k] <- quantile(X_star1, 0.025)
+      bootMLE.upper[k] <- quantile(X_star1, 0.975)
+      
+    # based on the bootstrap percentile method applied to the MOM estimate
+      X_star <- numeric(1000)
+      
+      for (j in 1:1000) {
+        bootSamp <- sample(Y, replace=TRUE)
+        X_star[j] <- mean(bootSamp) / (mean(bootSamp) - y_m)
+      }
+
+      bootMOM.lower[k] <- quantile(X_star, 0.025)
+      bootMOM.upper[k] <- quantile(X_star, 0.975)
+}
+```
+
+```{r}
+# 95% CI exact MLE distribution
+mean(CLT.lower)
+mean(CLT.upper)
+
+# 95% CI t distribution
+mean(CLT.lower)
+mean(CLT.upper)
+
+# 95% CI bootstrap percentile of MLE
+mean(bootMLE.lower)
+mean(bootMLE.upper)
+
+# 95% CI bootstrap percentile of MOM      
+mean(bootMOM.lower)
+mean(bootMOM.upper)
+```
+
+```{r}
+#alpha MOM estimate
+mean(alpha_hatMOM)
+
+#alpha MLE estimate
+mean(alpha_hatMLE)
+
+# our chosen estimate (exact MLE)
+alpha_hatMLE[k]
+
+# graph of bootstrap MLE distribution
+MLE.distr <- 1 / log(Y / y_m)
+hist(MLE.distr, main = "MLE distribution of Alpha", 
+     xlab = "Alpha Value", xlim = c(0,100), breaks = 1000)
+```
+
+```{r earthquakes6}
+
+# Compare the root mean squared errors of the two point estimates from part 3
+(rmse_MLE <- sqrt(mean((alpha_hatMLE - alpha)^2)))
+(rmse_MOM <- sqrt(mean((alpha_hatMOM - alpha)^2)))
+
+```
+
+```{r earthquakes7}
+
+# Comparison of the exact MLE confidence interval coverage rates
+(coverage.exact <- mean((alpha >= exact.lower) & (alpha <= exact.upper)))
+
+# Comparison of the t distribution confidence interval coverage rates
+(coverage.CLT <- mean((alpha >= CLT.lower) & (alpha <= CLT.upper)))
+
+# Comparison of the bootstrap percentile method applied to the MLE confidence interval coverage rates
+(coverage.bootMLE <- mean((alpha >= bootMLE.lower) & (alpha <= bootMLE.upper)))
+
+# Comparison of the bootstrap percentile method applied to the MOM
+# estimate confidence interval coverage rates
+(coverage.bootMOM <- mean((alpha >= bootMOM.lower) & (alpha <= bootMOM.upper)))
+```
+
+```{r earthquakes8}
+
+# Finally, the properties in parts 6 and 7 may depend on n and alpha. 
+# You should explore how changing these values affects the confidence intervals
+# For the confidence intervals, you should find that the exact CI 
+# derived in part (d) above does have exact coverage; 
+# when do the approximate CIs perform well and when do they perform poorly?
+
+#No significant difference in coverages with change in alpha. 
+# When alpha is small, the root mean square error is small. 
+# When alpha is large, the root mean square error is large. 
+# When n is big, the root square error is small. 
+#When n is small, the root square error is large. 
+
+# when n=length of earthquakes$magnitude, alpha = 10
+#rmse_MLE = 0.912
+#rmse_MOM = 0.923
+
+#coverage.exact = 0.953
+#coverage.CLT = 0.017
+#coverage.bootMLE = 0.946
+#coverage.bootMOM = 0.942
+
+# when n=length of earthquakes$magnitude, alpha = 100
+#rmse_MLE = 9.122
+#rmse_MOM = 9.128
+
+#coverage.exact = 0.953
+#coverage.CLT = 0
+#coverage.bootMLE = 0.946
+#coverage.bootMOM = 0.942
+  
+# when n=length of earthquakes$magnitude, alpha = 3
+#rmse_MLE = 0.274
+#rmse_MOM = 0.305
+
+#coverage.exact = 0.953
+#coverage.CLT = 0.222
+#coverage.bootMLE = 0.946
+#coverage.bootMOM = 0.912
+
+# when n=1000, alpha = 10
+#rmse_MLE = 0.321
+#rmse_MOM = 0.323
+
+#coverage.exact = 0.95
+#coverage.CLT = 0.013
+#coverage.bootMLE = 0.949
+#coverage.bootMOM = 0.946
+  
+# when n=5, alpha = 10
+#rmse_MLE = 8.502
+#rmse_MOM = 8.553
+
+#coverage.exact = 0.947
+#coverage.CLT = 0.021
+#coverage.bootMLE = 0.794
+#coverage.bootMOM = 0.773
+```
+
+
+```{r earthquakes}
+
+earthquakes <- read.csv('http://people.carleton.edu/~apoppick/ClassData/earthquakes.csv', 
+header = TRUE)
+
+n <- 120
+Y <- earthquakes$MAGNITUDE
+y_m <- 8
+
+# exact MLE estimate using data set
+(alpha_hatMLE.final <- n / sum(log(Y / y_m)))
+
+# based on exact MLE CI
+(exact.lower.final <- qgamma(0.025, shape = n, rate = 1) / sum(log(Y / y_m)))
+(exact.upper.final <- qgamma(0.975, shape = n, rate = 1) / sum(log(Y / y_m)))
+
+# probability estimate
+(8/9)^alpha_hatMLE.final
+
+# CI of probability estimate (CIs are flipped)
+(8/9)^exact.lower.final
+(8/9)^exact.upper.final
+```
