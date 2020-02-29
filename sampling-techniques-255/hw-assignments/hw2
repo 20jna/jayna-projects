@@ -1,0 +1,145 @@
+---
+title: "Math 255 HW #2"
+author: "Jay Na"
+date: "4/9/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**Problem 1 Ch. 2 Exercise 1**
+
+**a)** The population mean is 142. 
+```{r}
+# data set
+prob1 <- c(98, 102, 154, 133, 190, 175)
+
+# population mean
+popmean <- mean(prob1)
+```
+
+**b)** 
+**(i)** The expected value of the mean of the sample values in Plan 1 is 142. The expected value of the sample values in Plan 2 is 142.5.
+```{r}
+# expected value of Plan 1
+exv1 <- (1/8)*((98+154+190)/3) + (1/8)*((98+154+175)/3) + 
+  (1/8)*((98+133+190)/3) + (1/8)*((98+133+175)/3) +(1/8)*((102+154+190)/3)+ 
+  (1/8)*((102+154+175)/3) + (1/8)*((102+133+190)/3) + (1/8)*((102+133+175)/3)
+
+# expected value of Plan 2
+exv2 <- (1/4)*((98+133+175)/3) + (1/2)*((102+154+175)/3) + (1/4)*((98+154+190)/3)
+```
+**(ii)** The variance for Plan 1 is estimately 18.94 and the variance for Plan 2 is estimately 19.36.
+```{r}
+# expected squared value of Plan 1
+exvsq1 <- (1/8)*(((98+154+190)/3)^2) + (1/8)*(((98+154+175)/3)^2) + 
+  (1/8)*(((98+133+190)/3)^2) + (1/8)*(((98+133+175)/3)^2) +
+  (1/8)*(((102+154+190)/3)^2) + (1/8)*(((102+154+175)/3)^2) + 
+  (1/8)*(((102+133+190)/3)^2) + (1/8)*(((102+133+175)/3)^2)
+
+# expected squared value of Plan 2
+exvsq2 <- (1/4)*(((98+133+175)/3)^2) + (1/2)*(((102+154+175)/3)^2) + 
+  (1/4)*(((98+154+190)/3)^2)
+
+# variance of Plan 1
+var1 <- exvsq1 - (exv1^2)
+# variance of Plan 2
+var2 <- exvsq2 - (exv2^2)
+```
+**(iii)** The bias value for Plan 1 is 0 and the bias value for Plan 2 is 0.5.
+```{r}
+# bias of Plan 1
+bias1 <- exv1 - popmean
+# bias of Plan 2
+bias2 <- exv2 - popmean
+```
+**(iv)** The mean square error for Plan 1 is estimately 18.94 and the mean square error for Plan 2 is estimately 19.86.
+```{r}
+# standard deviation of Plan 1
+sd1 <- sqrt(var1)
+# standard deviation of Plan 2
+sd2 <- sqrt(var2)
+
+# mean square error of Plan 1
+mse1 <- (sd1^2) + (bias1^1)
+# mean square error of Plan 2
+mse2 <- (sd2^2) + (bias2^1)
+```
+
+**c)** With a smaller mean square error, sampling Plan 1 is more accurate, more precise, and better to use than sampling Plan 2.
+
+
+**Problem 2 Ch. 2 Exercise 2**
+
+**a)** The probability of selection is 1/4 for units 1, 2, 3, 5, 7. The probability of selection is 3/8 for 4, 6. The probability of selection for unit 8 is 1/2.
+
+**b)** (on separate sheet)
+
+
+**Problem 3 Ch. 2 Exercise 30 part (a) only (purposive means don’t use random sampling!)**
+
+**a)** For my purposive sample I chose 66, 48, 53, 33, 11, 75, 27, 1, 91, 59 with corresponding areas of 64, 36, 90, 3, 2, 8, 24, 12, 40, 49, respectively. With a sample mean of 32.8 sq. units per rectangle, the estimated total area would be 100(32.8) = 3280. I chose rectangles that represented different shape variations that had several other rectangles in the population that looked similar to them.  
+
+
+**Problem 4 Ch. 2 Exercise 8**
+
+**a)** In this situation, a simple random sample from a list of e-mail addresses for all students would not be appropriate, unless the case was that all students was under some sort of stratified category. If the study was meant to discuss all students in existance, than a simple random sample would not be very helpful in most cases because student responses often vary dramatically because of variables like age, grade, and geography. In that case, a stratified random sample, or cluster sample, may be more appropriate depending on what variable is trying to be observed.
+
+**b)** Although board-certified allergists are trained physicians, their level of expertise can very exponentially and so the patient's experience can be totally different based on who their allergist was. One way of fixing that problem would maybe clustering each group of patients by their allergist and randomly sampling the board-certified allergists.
+
+**c)** In this example, a simple random sample would be appropriate if the size of topics sampled is large enough. However, most likely there would be more errors in topics that are later in date, since technology has improved. With that said, a design that takes in account of the date would be more useful in the majority of cases that involve medical websites.
+
+**d)** In this example, a simple random sample would not be appropriate because the difference in votes could indicate soley the differences what people chose, not indicating the accuracy of a machine. In other words, if the votes from the machine count is totally different from the paper ballots, we cannot fully conclude that it is due to the machine. A better design would to be to run votes through the machine that is controlled and then analyze the accuracy of the machine by determining whether the controlled vote was correctly tallied or not.
+
+
+**Problem 5 Ch. 2 Exercise 10**
+
+SRS Design 3 will give the most precision for estimatinig a population mean.
+```{r}
+var1 <- (1-(400/4000))/400
+var2 <- (1-(30/300))/30
+var3 <- (1-(3000/300000000))/3000
+```
+
+**Problem 6 Ch. 2 Exercise 26**
+
+In a systematic sampling, each of the possible choices of samples could by case not be eqal. So, some weights of the units could possibly not equal, depending on the number of units in the population, which means that the SRS is not "self-weighting", which would mean that the condition 2.7 would not be able to be met.
+
+**Problem 7 Ch. 2 Exercise 13**
+
+**a)** A 95% CI for the total number of nurses in the county who would report bullying in their department is (474.96, 606.04).
+```{r}
+varsq6 <- (745/744)*(.2)*(1-.2) #S^2
+vartot6 <- (2700^2)*(1-(745/2700))*(varsq6)/745 #variance of total
+
+sterrortot <- sqrt(vartot6) #standard error of total
+
+esttot <- .2*2700 #estimated total number
+
+CIlower <- esttot - 1.96*sterrortot
+CIupper <- esttot + 1.96*sterrortot
+```
+
+**b)** For the analysis, we must assume that the total mean of nurses tha would report bullying in their department for the nonrespondents would equal the total mean of nurses that did respond to the survey. An assumption that could be made about the nonrespondents for the analysis is that there was no bullying in their departments and so that is why they didn't respond.
+
+
+**Problem 8 Read through Lohr ch. 2 exercise 6, then answer the two questions below using the following R output: (don’t answer the textbook questions)**
+```{r, eval = FALSE}
+pubs <- c(rep(0,28), rep(1,4), rep(2,3), rep(3,4), rep(4,4), 
++          rep(5,2), rep(6,1), rep(7,0), rep(8,2), rep(9,1), rep(10,1))
+table(pubs)
+summary(pubs)
+sd(pubs)
+```
+
+**(a) Estimate the mean number of publications per faculty member and give a SE.**
+The estimated mean number of publications per faculty member is 1.78. Its SE is estimately 2.68.
+
+**(b) Estimate the proportion of faculty members with no publications and give a SE.**
+The estimate proportion of faculty members with no poublications is 28/50 = 0.56. The SE is estimately 0.069.
+```{r}
+sterror8 <- sqrt((1-50/807)*((.56*(1-.56))/(49)))
+```
+
