@@ -1,7 +1,7 @@
 # jayna-projects
 *Jay Na's Repository of Past Work & Projects*
 
-Objective:
+Carreer Objective:
 
 - Continue to grow my understanding of statistical analyses and its real-world applications, especially in the fast-moving tech sector
 
