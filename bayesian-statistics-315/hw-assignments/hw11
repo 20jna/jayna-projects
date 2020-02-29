@@ -1,0 +1,200 @@
+---
+title: 'Homework #11'
+author: "Jay Na"
+date: "11/4/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message = FALSE}
+library(rjags)
+library(MASS)
+library(coda)
+data(Boston)
+```
+
+**Ch.3 Exercise 15**
+
+**a.)**
+
+```{r, fig.width = 5, fig.height = 7}
+mass <- c(29.9, 1761, 1807, 2984, 3230, 5040, 5654)
+age <- c(2, 15, 14, 16, 18, 22, 28)
+n <- length(age)
+ex15_data <- list(mass=mass, age=age, n=n)
+
+
+ex15_string <- textConnection("model{
+          # likelihood
+          for (i in 1:n){
+          mass[i] ~ dnorm(theta1+theta2*pow(age[i],theta3), tau)
+          }
+          
+          # priors
+          theta1 ~ dnorm(0,10000)
+          theta2 ~ dunif(0,20000)
+          theta3 ~ dnorm(0,1)
+          tau ~ dgamma(0.01,0.01)
+          sigma <- 1/sqrt(tau)
+          
+          for (i in 1:n){
+          mu[i] <- theta1+theta2*pow(age[i],theta3)
+          }
+          }")
+
+ex15_model <- jags.model(ex15_string, data = ex15_data, n.chains = 3)
+
+# Draw 1000 burn-in samples 
+update(ex15_model, 1000)
+
+# Draw 10000 posterior samples
+ex15_samples <- coda.samples(
+  ex15_model, 
+  variable.names = c("theta1", "theta2", "theta3", "sigma", "mu"), 
+  n.iter = 10000, 
+  progress.bar = "none"
+)
+
+par(mar=c(3,2,1,1))
+plot(ex15_samples)
+plot(mass~age)
+```
+
+**b.)** Sufficient convergence is reached as we can tell from our investigation. As you can see, on average, our geweke values were below 2. Also, in our Gelman-Rubin diagnostic, mostly all our Gelman-Rubin values were below 1.1 and close to 1.
+
+```{r}
+geweke.diag(ex15_samples)
+gelman.diag(ex15_samples)
+```
+
+**c.)** One step I may take to improve convergence is increase the number of iterations run in my simulation. Another would be to use better initial values than the ones set. Another could be to tune the M-H candidate distribution.
+
+**Ch.3 Exercise 16**
+
+**a.)** The convergence may be slow for this model since it only has one observed data point.
+
+**b.)**
+```{r, fig.width = 5, fig.height = 7}
+y <- 10
+
+ex16_string <- textConnection("model{
+          # likelihood
+          y ~ dbin(p,n)
+
+          # prior
+          n ~ dpois(lambda)
+          p ~ dbeta(a,b)
+          theta <- n*p
+          }")
+
+ex16_data <- list(y=y, lambda = 10, a = 1, b = 1)
+ex16_model <- jags.model(ex16_string, data = ex16_data,  n.chains = 1)
+
+# Draw 1000 burn-in samples 
+update(ex16_model, 1000)
+
+# Draw 10000 posterior samples
+ex16_samples <- coda.samples(
+  ex16_model, 
+  variable.names = c("n", "p", "theta"), 
+  n.iter = 10000, 
+  progress.bar = "none"
+)
+
+summary(ex16_samples)
+plot(ex16_samples)
+```
+
+**c.)** As the shape and scale of the prior distribution p increases, convergence seems to occur with the same number of iterations but are less variant, with the posterior dsns of all three parameters more normally distributed.
+
+```{r, fig.width = 5, fig.height = 7}
+y <- 10
+
+ex16c_string <- textConnection("model{
+          # likelihood
+          y ~ dbin(p,n)
+
+          # prior
+          n ~ dpois(lambda)
+          p ~ dbeta(a,b)
+          theta <- n*p
+          }")
+
+ex16c_data <- list(y=y, lambda = 10, a = 10, b = 10)
+ex16c_model <- jags.model(ex16c_string, data = ex16c_data,  n.chains = 1)
+
+# Draw 1000 burn-in samples 
+update(ex16c_model, 1000)
+
+# Draw 10000 posterior samples
+ex16c_samples <- coda.samples(
+  ex16c_model, 
+  variable.names = c("n", "p", "theta"), 
+  n.iter = 10000, 
+  progress.bar = "none"
+)
+
+summary(ex16c_samples)
+plot(ex16c_samples)
+```
+
+**Ch.4 Exercise 2**
+
+**a.)**
+
+```{r, fig.width = 5, fig.height = 7}
+boston.std <- data.frame(scale(Boston))
+Y <- boston.std[,14]
+X <- boston.std[,c("crim","zn","indus","chas","nox","rm","age","dis","rad","tax","ptratio","black","lstat")]
+n <- length(Y)
+p <- ncol(X)+1
+X <- cbind(1,X)
+
+data <- list(Y=Y, X=X, n=n, p=p)
+params <- c("beta","sigma")
+
+burn <- 2000
+n_inter <- 10000
+thin <- 10
+
+reference_string <- textConnection("model{
+              # Likelihood
+              for (i in 1:n){
+              Y[i] ~ dnorm(inprod(X[i,],beta[]),taue)
+              }
+              
+              # Priors
+              for (j in 1:p){
+              beta[j] ~ dnorm(0, 1/pow(10,3))
+              }
+              taue ~ dgamma(.001,.001)
+              sigma <- 1/sqrt(taue)
+              }")
+
+boston_model <- jags.model(reference_string, data=data, n.chains = 1)
+
+update(boston_model, burn)
+
+boston_samples <- coda.samples(
+  boston_model,
+  variable.names = c("beta","sigma"), 
+  n.iter = 10000,
+  thin = thin,
+  progress.bar = "none"
+)
+
+par(mar=c(3,2,1,1))
+summary(boston_samples)
+plot(boston_samples)
+```
+
+**b.)**
+
+```{r}
+boston_lm <- lm(medv ~ crim + zn + indus + chas + nox + rm + age + dis + rad + tax + ptratio + black + lstat, data = boston.std)
+summary(boston_lm)
+```
+
