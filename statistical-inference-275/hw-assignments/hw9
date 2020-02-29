@@ -1,0 +1,96 @@
+---
+title: "Math 275 HW#9"
+author: "Jay Na"
+date: "5/22/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**1. Exercise 8.3. (Answer in back of book)**
+
+The null hypothesis is that the average body temperatures in children in Sodor are equal to the average normal body temperature. The alternate hypothesis is that the average body temperatures in children in Sodor are higher than the average normal body temperature. The hypothesis statement is given on separate sheet as well. The p-value for this hypothesis testing is 0.007, which allows us to conclude that on average body temperatures are higher for children in Sodor.
+```{r}
+BodyTemps <- c(98.0, 98.9, 99.0, 98.9, 98.8, 98.6, 99.1, 98.9, 98.5,
+98.9, 98.9, 98.4, 99.0, 99.2, 98.6, 98.8, 98.9, 98.7)
+
+xbar <- mean(BodyTemps)
+se <- sd(BodyTemps)/sqrt(18)
+
+t <- (xbar-98.6)/se
+
+pt(t, 17, lower.tail=FALSE)
+```
+
+**2. Exercise 8.8. For part (a), as in HW7, you may use the t.test command, but also write out the formula for the t-statistic that is being calculated and the name of the distribution used to compute the p-value.**
+
+**a)** Here we are using a t-distribution to compute the p-value. The formula for the t-stat is given on separate sheet. With a p-value of 0.0003, we can conclude that there is a difference in the average change in diameter of the seedlings over the 5-year period of the study between the seedlings in the No Competition group and the Competition group.
+```{r}
+data(Spruce, package = "resampledata")
+
+t.test(Diameter5 ~ Competition, data=Spruce)
+```
+
+**b)** The fact that the seedlings were randomly assigned to the two groups implies that for the conclusion reached in part a), the sample means will be different even when the population means are the same due to random variation in the samples. 
+
+**3. [Clarification of Exercise 8.26.] In the town of Sodor, the average weight of mice is 340 g with standard deviation 30 g. The mayor in Shetland suspects that mice in his town weigh more (H0 : mu = 340 vs Ha : mu > 340.). Suppose that the true average weight in Shetland is 354 kg, and the mayor conducts the test at the 10% significance level. What must n be if he wants an 85% chance of detecting an increase in weight compared to Sodor mice? (Reminder: use the qnorm and pnorm functions for the quantile function and CDF of the normal distribution.)**
+
+n = 24.672 so we need a sample of about 25 mice to achieve a power of 85% to reject at the 10% level.
+```{r}
+(zstat <- qnorm(.90))
+(power <- qnorm(0.85))
+(mean_dif <- 354-340)
+
+(n <- ((power+zstat)*(30/mean_dif))^2)
+```
+
+**4. Exercise 8.34. To get the pdf of Xmax, recall Corollary 4.2.2 on p. 82.**
+
+k must be 1.570 to make the probability of a type I error equal to 0.05.
+```{r}
+(xmax <- (0.95*(2^5/5))^(1/4))
+```
+
+**5. Exercise 8.39. (Answer in back of book)**
+
+In order for the overall type I error rate to be 0.05, the significance level should be 0.003 for each test. 
+```{r}
+(overall <- .05/19)
+```
+
+**6. This question asks you to consider some implications in very low-powered studies. Suppose that X1, ..., X100 are i.i.d. with (unknown) mean mu = 0.5 and (known) standard deviation = 10. You are interested in testing the hypotheses H0 : mu = 0 vs. Ha : mu does not equal 0. You will reject the null hypothesis if p < 0.05. (Reminder: use the qnorm and pnorm functions for the quantile function and CDF of the normal distribution.)**
+
+**(a) What values of Xbar would allow you to reject H0**
+
+Values of Xbar that are less than -1.645 and greater than 1.645 will allow us to reject H0.
+```{r}
+qn_min <- qnorm(0.05)
+qn_max <- qnorm(0.95)
+
+(xmin <- qn_min*(10/sqrt(100)))
+(xmax <- qn_max*(10/sqrt(100)))
+```
+
+**(b) What is the power of this test? (Be careful. This is a two-sided test.)**
+
+Work shown on separate sheet.
+```{r}
+(power <- pnorm(1.59, lower.tail=FALSE) + pnorm(-1.69))
+```
+
+**(c) Suppose you obtain an Xbar value that allows you to reject H0. What is the probability that Xbar < 0, given that you reject H0 (i.e., you reject H0 but your estimate is of the wrong sign).**
+
+Given that we obtained an Xbar value that allowed us to reject H0, the probability that Xbar < 0 is 44.87%.
+```{r}
+pnorm(-1.69)/power
+```
+
+**(d) Suppose you obtain an Xbar value that allows you to reject H0 and that Xbar > 0. What is the smallest possible ratio of Xbar to the true value mu = 0.5**
+
+The smallest possible ratio of Xbar to the true value is 1.59.
+
+**(e) Suppose I conduct a low-powered test for a mean effect of interest. I get a large, positive estimated effect and I am able to reject the null hypothesis. I conclude that the true effect is not zero. Is it valid to conclude that the true effect is positive? Is it valid to conclude that the true effect is large? Explain.**
+
+It is not valid to conclude that the true effect is is positive or large since the test conducted is low-powered. Since it is low-powered, the Type II error rate is large. And so, being that we are able to reject the null hypothesis, we cannot conclude the results from our estimations are the same for the true effect, rather we can only conclude that the true effect is not zero. 
