@@ -1,0 +1,24 @@
+---
+title: 'Math 275 HW #7'
+author: "Jay Na"
+date: "5/9/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**4.a)** As a single-sample case with n = 72, it is appropriate to use t-distribution based methods to construct a confidence interval for the difference in means because the population standard deviations for both height change distributions are unknown.
+```{r, fig.height = 4, fig.width = 4}
+data(Spruce, package = "resampledata")
+Spruce_subset <- subset(Spruce, Fertilizer == "NF")
+
+boxplot(Ht.change ~ Competition, data = Spruce_subset, xlab = "Competition Status", ylab = "Change in Height (cm)", main = "Height Change Distributions 
+        by Competition Status")
+```
+
+**b)** The 95% CI for the difference in means is (-16.080, -7.831). This means that with 95% confidence, the average height change of black spruce seedlings with competition treatment is between 7.831 and 16.080 cm lower than the average height change of black spruce seedlings without competition treatment. (formula on written page)
+```{r}
+t.test(Ht.change ~ Competition, data = Spruce_subset)
+```
