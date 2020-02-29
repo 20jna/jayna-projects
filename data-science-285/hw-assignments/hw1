@@ -1,0 +1,129 @@
+---
+title: "Homework 1"
+author: "Jay Na"
+date: "Due by 1:50 am, Wed. 1/16"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, error = TRUE)
+```
+
+## To Do: Complete before Wednesday's class (1/16)
+Use full sentences to answer the questions below if you are asked for an *answer* or *explanation*. You should be able to complete questions with a little review of intro stats R commands.
+
+Push your knitted homework assignment (.Rmd and .md files) to GitHub by the given deadline. Also let me know: 
+
+**Who you worked with:**
+
+### Problem 1
+
+Textbook exercise 2.2. Here is the [referenced NYT website](http://www.nytimes.com/2012/04/15/sunday-review/coming-soon-taxmageddon.html?_r=0), the two graphs are in the links at the bottom of the article. Here are the links in case you can't view the article (I had to use an incognito window in Chrome to see the article):
+
+- [Whose Tax Rates Rose or Fell](https://archive.nytimes.com/www.nytimes.com/imagepages/2012/04/13/opinion/sunday/0415web-leonhardt.html)
+- [Who Gains the Most from Tax Breaks](https://archive.nytimes.com/www.nytimes.com/imagepages/2012/04/13/opinion/sunday/0415web-leonhardt2.html)
+
+- Carefully answer questions 1-3 for these two graphs. You can refer to them as "graph 1" (Whose Tax rates rose or fell) and "graph 2" (Who gains the most from tax breaks) in your answers.  
+- Question 2 asks about variable dimension vs. data dimension. There is *one* graph that displays info about four variables but only three variables are connected to visual cues in the picture (the fourth variable is displayed as text but with no visual cue). Determine which graph this is, of the two, describes the variables that are and aren't visualized in the graph. 
+
+
+1. Graph 1 portrays the changes in average total federal tax rates for separate economic classes from 1960 to 2004. The graph shows in comparison which classes' tax rates decreased the most and which were able to rise. This graph shows how much of the higher income classes' tax rates have decreased significantly throughout the chosen years. This graph emphasizes the significant changes in tax rates that occured in relation to Bush's tax cuts in 2004 and compare them with the years before it.
+Graph 2 portrays the distribution of tax breaks to each economic class in 2011. The graph fragments the classes first by the top 20% of taxpayers and then the 80%. It then categorizes the separate income classes in those percentages. It wants to show the five largest kinds of tax breaks and the pecentage breakdowns for each category.
+
+2. I found the percentages dotted lines in graph 1 to be difficult to read because it partially was cut off by the title. The data remained under 80%, and so it was hard to notice that the 100% line was part of the graph. I found that everything was labelled clearly in this graph and the scale of 10 years to be appropriate for this data since we are trying to see the overall changes throughout a long period of time rather than year by year. I found the income amounts in Graph 2 hard to read because they were in between the lines separating the different economic groups rather than distinctively being next to the part of bar graph that they represented. I also found the scale of the bar graphs to be misleading. For example, the next 19% appears to receive significantly more exclusions in tax breaks than the top 1% because of the magnitude of its segment in the bar graph. I thought the subtitles were clearly stated. It was confusing why they chose to split the graph into the 20% of taxpayers and the 80%, since the percentages that add up to them are stated right next to it.
+
+3. See Answer #2.
+
+```diff
++ what are the visual cues used in these graphs?
+```
+
+### Problem 2
+Textbook exercise 2.5. Here is a [link to the website containing links to the collection](http://mdsr-book.github.io/exercises.html). 
+
+1. I chose the wind map as my graph, which attempts to portray the directions and velocities of winds throughout the United States at the time the window was opened on your computer. The main message I recieved from the graph is how much wind patterns fluxuate in speed and direction throughout the country. 
+
+2. The position of the graph works well with my screen and all the data is able to be portrayed visably. The color remains black and white, which is nice for an overall view but not to see the wind speeds specifically. The time interval is stagnant which is useful because it would be difficult to examine the graph if it moved with time, since it is moving already.
+
+3. I thought the author did a good job turning the data recieved into a visual. I found the data, although visually pleasing, difficult to extract specific data from. Because everything is in black and white and the wind speeds are labeled by the density of moving lines, it is hard to tell specifically what exact wind speed is where. I would personally decipher wind speeds by color and so you are able to see exactly what the exact speed is and where it slows down or speeds up. This graph is useful to see an overall view of wind moving throughout the U.S. but is not useful when looking for specifics.
+
+
+
+### Problem 3
+Textbook exercise 3.1. The data are stored in the `mosaicData` package, so you may need to install this package (not in your .Rmd file!) before loading it. Once the package is loaded, the data set `Galton` will be available to use.
+
+```{r}
+library(mosaic)
+library(tidyverse)
+```
+
+1.
+```{r}
+
+ggplot(data = Galton) + geom_point(mapping = aes(x = height, y = father)) + labs(x = "Child's Height (inches)", y = "Father's Height (inches)", title = "Child's vs. Father's Height")
+
+```
+
+```diff
++ height against father is `x = father, y = height`
+```
+
+2.
+```{r}
+
+ggplot(data = Galton) + geom_point(mapping = aes(x = height, y = father)) + facet_grid(cols = vars(sex)) + labs(x = "Child's Height (inches)", y = "Father's Height (inches)", title = "Child's vs. Father's Height")
+
+```
+
+```diff
++ can also try `facet_wrap(~sex)`
+```
+
+3.
+```{r}
+
+ggplot(data = Galton) + geom_point(mapping = aes(x = height, y = father)) + facet_grid(cols = vars(sex)) + geom_smooth(method = lm, mapping = aes(x = height, y = father), color = 'red') + labs(x = "Child's Height (inches)", y = "Father's Height (inches)", title = "Child's vs. Father's Height")
+
+```
+
+
+### Problem 4
+Textbook exercise 3.8.
+```{r}
+library(macleish)
+
+
+ggplot(data = whately_2015, aes(x = when, y = temperature)) + geom_smooth() + labs(x = "Minutes Passed Each Day", y = "Temperature (degrees Celcius)", title = "Average Temperature Throughout a Day in 2015")
+```
+
+
+### Problem 5
+Textbook exercises 3.10. The data for the problem is the data frame `storms` in the `nasaweather` package. 
+
+- Use `lat` (y-axis) and `long` (x-axis) to plot the path of the storms and add `coord_quickmap()` to get a decent aspect ratio between the two coordinates (so you can accurately judge distance traveled).
+- To exclude the legend of storm names/colors you can add `scale_color_discrete(guide="none")`. 
+
+```{r}
+library(nasaweather)
+
+ggplot(data = storms, aes(x = long, y = lat, color = name)) + geom_path() + facet_wrap(vars(year)) + coord_quickmap() + scale_color_discrete(guide="none") + labs(x = "Longitude (degrees)", y = "Latitude (degrees)", title = "Path of Tropical Storms")
+
+```
+
+### Problem 6
+
+Consider the `MLB_teams` data set that is in the `mdsr` package (see exercise 3.5). (Install `mdsr` if needed, then load the package to get the data set.)
+
+Use this data set to create a graph with at least 4 variables present. Describe the story you are attempting to display. 
+
+```{r}
+library(mdsr)
+
+ggplot(data = MLB_teams, aes(x = W, y = L, color = teamID)) + geom_point() + facet_grid(cols = vars(yearID), rows = vars(lgID)) + labs(x = "Number of Wins", y = "Number of Losses", title = "Wins vs Losses in MLB") + scale_color_discrete(guide="none")
+
+```
+This graph portrays the wins and losses of each MLB team from 2008 to 2014. The top row shows teams from the AL and the bottom row shows the teams from the NL. This graph means to show which division had teams with more or less wins/losses in comparison to the other. The point of this graph is not to compare each team from each other but the divisions as wholes. 
+
+```diff
++ This graph is a bit hard to interpret. I do not think scatter plot serves your purpose of comparison very well. It is quite intuitive to see all the downward slopes because if a team has many losses, it has fewer wins. However, the colors in the top row and bottom row are very hard to understand.
+```
