@@ -1,0 +1,127 @@
+---
+title: "team-hw-3"
+author: "Kavie Yu and Jay Na"
+date: "3/3/2019"
+output: github_document
+---
+**Classifying Votes in 2016 Election**
+
+***Introduction***
+
+Voting behaviors are largely depended on attitudinal and social factors. In hopes to predict voters’ decisions, particularly in the 2016 election, we conducted a classification model that would predict whether a voter is more likely to vote Republican or Democratic. To make our prediction model comprehensive, we include particular factors that capture economic, political, educational, racial and gender differences. 
+	The original dataset includes predictors such as population, housing situations, languages spoken, veterans status, travel time, per capita money income, and number of firms. After various trials of tuning the classifier, we decided to use factors that are likely to pull voters to extreme ends. The predictor SEX 255214 (percentage of female persons) was included, as gender-related policies are highly likely to have an effect on females’ voting behaviors. 
+Race is another big predictor in our model, as some policies are discriminating against the minorities in the US, and will likely to result in distinctive voting behaviors. The percentages of all identified races in the dataset (RHI125214, RHI225214, RHI325214, RHI425214, RHI525214, RHI625214, RHI725214 and RHI825214) are included. Additionally, we included the levels of education (EDU635213 and EDU685213). Education plays a big part in people’s voting behavior, as researchers have found big percentage gaps in voting for different parties between non-college-educated and college-educated people, and the Atlantic even once claimed that “America is Divided by Education”. Lastly, we considered the private nonfarm employment and its percentage change (BZA110213 and BZA115213) as important economic factors that are likely to influence people’s voting behaviors, being that employment is such a major topic in political debate.
+
+Overall, the predictors we selected for our model are: 
+
+
+SEX255214 Female persons, percent, 2014
+
+
+RHI125214 White alone, percent, 2014
+
+
+RHI225214 Black or African American alone, percent, 2014 
+
+
+RHI325214 American Indian and Alaska Native alone, percent, 2014
+
+
+RHI425214 Asian alone, percent, 2014
+
+
+RHI525214 Native Hawaiian and Other Pacific Islander alone, percent, 2014
+
+
+RHI625214 Two or More Races, percent, 2014
+
+
+RHI725214 Hispanic or Latino, percent, 2014
+
+
+RHI825214 White alone, not Hispanic or Latino, percent, 2014
+
+
+EDU635213 High school graduate or higher, percent of persons age 25+, 2009-2013
+
+
+EDU685213 Bachelor's degree or higher, percent of persons age 25+, 2009-2013
+
+
+BZA110213 Private nonfarm employment, 2013
+
+
+BZA115213 Private nonfarm employment, percent change, 2012-2013
+
+
+***Method***
+
+With two separate tidy data sets, one used as a test set and one as a training set, we were able to make out predictions on who would win the election using a KNN classification model. As described above, our predictor variables all contain numeric values, and so we initially had to standardize our data. We then created a grid that would later fit our tuned parameters. Using `winner16` as our classifier, we conducted a 5-fold cross validation that outputted the accuracies of k =  1, 3, 5, 7, 9, 11, 13, 15 in our newly created grid, where k=7 produced the largest accuracy of 92.4%. Since k = 7 generated the optimal model for the training set, we decided to use it as our k-value in our KNN classification model with the test set, setting the `train` equal to the training set, the `test` equal to the test set, and the `class` equal to categorical variable `winner16` from the training set. The results generated given our predictors were then mutated to the test set, which we named as `testNoY_YuandNa.csv`.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(caret)
+library(class)
+library(rpart)
+```
+
+```{r, echo = FALSE, message = FALSE}
+train <- read_csv("https://aloy.rbind.io/data/train.csv")
+key <- read.csv("https://aloy.rbind.io/data/county_facts_dictionary.csv")
+testNoY <- read_csv("https://aloy.rbind.io/data/testNoY.csv")
+```
+
+```{r, echo = FALSE}
+#selecting specific categories as training set
+train1 <- train %>% select(SEX255214, RHI125214,RHI225214, RHI325214, RHI425214, RHI525214, RHI625214, RHI725214, RHI825214, EDU635213, EDU685213, BZA110213, BZA115213, winner16)
+
+#standardizing predictor values throughout all numeric columns
+train1_means <- train1 %>% summarize_if(is.numeric, mean, na.rm = TRUE)
+train1_sds   <- train1 %>% summarize_if(is.numeric, sd, na.rm = TRUE)
+standardize <- function(x, na.rm = FALSE) {
+  (x - mean(x, na.rm = na.rm)) / sd(x, na.rm = na.rm)
+}
+std_train1 <- train1 %>% mutate_if(is.numeric, standardize, na.rm = TRUE)
+
+#creating filtered data sets for knn classification model
+train1_preds <- train1 %>% select(SEX255214, RHI125214,RHI225214, RHI325214, RHI425214, RHI525214, RHI625214, RHI725214, RHI825214, EDU635213, EDU685213, BZA110213, BZA115213)
+test_preds <- testNoY %>% select(SEX255214, RHI125214,RHI225214, RHI325214, RHI425214, RHI525214, RHI625214, RHI725214, RHI825214, EDU635213, EDU685213, BZA110213, BZA115213)
+
+```
+
+```{r, echo = FALSE}
+#setting grid for cv model
+k_grid <- data.frame(k = seq(1, 15, by = 2))
+
+train_control <- trainControl(
+  method = "cv",          # we're performing cross validation
+  number = 5,             # with 5 folds
+  returnResamp = "final"  # and returning only the final model
+)
+
+set.seed(234790)
+
+#runnning cross validation
+knn_cv <- train(
+  winner16 ~ .,      # response ~ explanatory variables
+  data =  train1,                  # data set used for k-fold cv
+  method = "knn",                  # specifying knn model
+  preProc = c("center", "scale"),  # within each fold, standardize
+  tuneGrid = k_grid,               # grid for parameters being tuned
+  trControl = train_control        # pass in training details
+)
+
+#Making Predictions using KNN classification model
+knn_prob1 <- knn(train = train1_preds, test = test_preds, cl = train1 %>% pull(winner16), k = 7)
+testNoY <- testNoY %>% 
+            mutate(pred_winner = knn_prob1) #mutating predictions to test set
+
+#saving modified test data file
+write_csv(testNoY, "testNoY_YuandNa.csv")
+
+ggplot(knn_cv) +
+  scale_x_continuous(breaks = seq(1, 9, by = 2)) + labs(x = "# of Neighbors (k)", y = "Accuracy", title = "Accuracies in Cross-Validation Model of the Training Set")
+```
+
+
