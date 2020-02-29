@@ -1,0 +1,246 @@
+---
+title: "Math 255 - Homework 5"
+author: "Jay Na"
+date: "Due in class, Monday April 29"
+output: pdf_document
+---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, prompt=TRUE, comment=NULL,tidy.opts=list(width.cutoff=60),tidy=TRUE,eval=TRUE)
+```
+
+### Problem 1
+Consider a population that has been divided into two strata. The first has a population size of $N_1 = 1000$ and the response of interest has a standard deviation of $S_1 = 10$. The second stratum has a population size of $N_2 = 1000$ and the response of interest has a standard deviation of $S_2 = 1$. The first stratum costs $c_1 = \$2$ per unit to sample and the second stratum costs $c_2 = \$1$ per unit to sample. There are no fixed costs for this survey.
+
+**(a) Suppose you sample $100$ units using proportional allocation (both allocation fractions are 0.5). Compute the cost of this sampling design and compute the variance of the stratified population mean estimator.**
+
+The cost of this sampling design is $150 and the variance is 0.480.
+```{r}
+(cost <- 0 + 2*100*.5 + 1*100*.5)
+(var <- (1-(100*.5/1000))*(1000/2000)^2*(10^2/(100*.5)) + (1-(100*.5/1000))*(1000/2000)^2*(1^2/(100*.5)))
+```
+
+**(b) Compute the optimal allocation fractions $a_1$ and $a_h$ for this population.**
+
+The optimal allocation fractions $a_1$ and $a_h$ for this population are 0.876 and 0.124, respectively.
+```{r}
+num_1 <- (1000*10)/(sqrt(2))
+num_2 <- (1000*1)/(sqrt(1))
+
+(op_a1 <- num_1/(num_1+num_2))
+(op_a2 <- num_2/(num_1+num_2))
+```
+
+**(c) Under your optimal allocation from (b), what should $n$ be if your budget is $150?**
+
+$n$ should be 79. 
+```{r}
+(n <- (150-0)/((2*op_a1)+(1*op_a2)))
+```
+
+**(d) Using your optimal allocation from (b) and budget from (c), compute the variance of the stratified population mean estimator. Compare your budget and variance for this scenario to your budget and variance from part (a).**
+
+The variance of the stratified population mean estimator is 0.362. The budget for this scenario is the same as the cost for the scenario from part (a). The actual cost of this scenario (148.21) is slightly lower than the budget (150) because the cost would exceed $150 if n = 80. It also yields a smaller variance than the scenario in part (a).
+```{r}
+(total <- 79*op_a1*2 + 79*op_a2*1)
+
+(var2 <- (1-(79*op_a1/1000))*(1000/2000)^2*(10^2/(79*op_a1)) + (1-(79*op_a2/1000))*(1000/2000)^2*(1^2/(79*op_a2)))
+```
+
+**(e) Under your optimal allocation from (b), what should $n$ be to achieve a 95% margin of error of at most 1.36 when estimating the population mean? Compare your budget and variance for this scenario to your budget and variance from part (a).**
+
+$n$ must be 61, which ignores the FPC because the stratum population sizes are not smaller than 61. The cost of this scenario (114.44) is lower than the cost of scenario in part (a) (150). However, the variance of this scenario (0.476) is slightly lower than the variance in part (a) (0.480) but is relatively similar. 
+```{r}
+(v <- (1000/2000)^2*(10^2/op_a1) + (1000/2000)^2*(1^2/op_a2))
+(n0 <- v*(1.96^2)/(1.36^2))
+
+(cost_e <- 61*op_a1*2 + 61*op_a2*1)
+(var3 <- (1-(61*op_a1/1000))*(1000/2000)^2*(10^2/(61*op_a1)) + (1-(61*op_a2/1000))*(1000/2000)^2*(1^2/(61*op_a2)))
+```
+
+### Problem 2
+*Lohr textbook ch. 3 exercise 8. (Hint: for the given budget and costs scenarios, use optimal allocation to get the allocation fractions, then find $n$ and determine the $n_{telephone}$ and $n_{no \ telephone}$.)*
+
+**a)** There should be 500 households interviewed in person and no other in any other groups if all households are interviewed in person.
+```{r}
+budget <- 20000
+tel_prop <- .9
+tel_cost <- 10
+int_cost <- 30
+nonphone <- 40
+#variances are similar
+fixcost <- 5000
+
+(n_interview <- (budget-fixcost)/(int_cost))
+
+```
+
+**b)** There should be 1166 households with a phone that are contacted by telephone and 129 households without a phone that are contacted in person. 
+```{r}
+a_tel <- (.9/sqrt(10))/((.9/sqrt(10))+(.1/sqrt(40)))
+a_no <- (.1/sqrt(40))/((.9/sqrt(10))+(.1/sqrt(40)))
+
+(n_prob2 <- (budget-fixcost)/(tel_cost*a_tel + nonphone*a_no))
+
+(n_withphone <- .9*n_prob2)
+(n_withoutphone <- .1*n_prob2)
+```
+
+### Problem 3 
+*Lohr textbook ch. 3 exercise 22(a-b).*
+
+**a)** $n_1$ is 1079 and $n_2$ is 921 under optimal allocation.
+```{r}
+a_1 <- .4
+a_2 <- .6
+(sd_1 <- sqrt(.1*(1-.1)))
+(sd_2 <- sqrt(.03*(1-.3)))
+
+(a_1op <- .4*sd_1/(.4*sd_1+.6*sd_2))
+(a_2op <- .6*sd_2/(.4*sd_1+.6*sd_2))
+ 
+(op_n1 <- 2000*a_1op)
+(op_n2 <- 2000*a_2op)
+```
+
+**b)** The variance of p stratified is 1.429E-5 under proportional allocation. The variance is 1.228E-5 under optimal allocation. The variance under SRS is 0.158.
+```{r}
+#prop allocation
+(prop_n1 <- .4*2000)
+(prop_n2 <- .6*2000)
+
+(var_prop <- (1-.4)*(.4)^2*(sd_1^2/(800)) + (1-.6)*(.6)^2*(sd_2^2/(1200))) 
+
+#optimal allocation
+(var_op <- (1-a_1op)*(.4)^2*(sd_1^2/(1079)) + (1-a_2op)*(.6)^2*(sd_2^2/(921)))
+
+#SRS
+(var_srs <- sqrt(.4^2*sd_1^2 + .6^2*sd_2^2))
+```
+
+### Problem 4
+*Lohr textbook ch. 4 exercise 1.*
+
+**a)** We might use ratio estimation to estimate the proportion of time in television news broadcasted in my city that is devoted to sports by looking at the the ratio of the news that is devoted to sports from the total amount of news that is broadcasted.
+
+**b)** We might use ratio estimation to estimate the average number of fish caught per hour in August by looking at the ratio of the number of fish caught in a hour from the total number of fish caught.
+
+**c)** I might use ratio estimation by randomly selecting and surveying a number of undergraduate students at my university and ask them how much they spent on how spent on textbooks in the fall semester and use that average and applying it to the total number of undergaduate students at my university to estimate the overall average amount.
+
+**d)** I might look at a number of chickens in the shipment and find the average ratio of usable meat to total meat for those chickens and use this ratio to estimate the total weight of usable meat in a whole shipment of chickens.
+
+### Problem 5
+*Lohr textbook ch. 4 exercise 2.*
+
+**a)** t of x is 69. t of y is 82. The standard error of x and y are 4.092 and 5.182, repectively. R is 0.815 and B is 1.188.
+
+```{r}
+y <-  c(10,7,13,17,8,1,15,7,4)
+x <- c(13,7,11,12,4,3,11,3,5)
+n <- 3
+N <- 9
+(t.x <- sum(x))
+(t.y <- sum(y))
+(s.x <- sd(x))
+(s.y <- sd(y))
+(r <- cor(x,y))
+(b <- t.y/t.x)
+```
+
+**b)**
+```{r}
+reps <- 10000
+results <- data.frame(run = 1:reps, t.srs = NA, t.ratio = NA)
+
+set.seed(124)
+for (i in 1:reps)
+{
+s<- sample(1:N, n, replace=F)
+y.samp <- y[s]
+x.samp <- x[s]	
+	
+results$t.srs[i] <- N*mean(y.samp) # srs est.
+results$t.ratio[i] <- (N*mean(y.samp))*(t.x/(N*mean(x.samp)))   # ratio est.
+}
+```
+
+**c)** Both sampling distributions are relatively normal, unimodal. However, the sampling distribution of the Ny appears to be more spead out and have a larger standard deviation than the ratio sampling distribution. The center of both histograms look relatively similar. 
+```{r}
+#ratio histogram
+hist(results$t.ratio, main = "Sampling Dist. of ty (Ratio)", xlab = "Total Ratio Estimates")
+
+#ny
+hist(results$t.srs, main = "Sampling Dist. of ty (SRS)", xlab = "Total SRS Estimates")
+```
+
+**d)** The mean of the ratio estimates (82.857) is slightly higher than the mean of the Ny estimates (81.931) but are relatively similar. The variance of the Ny (475.013) however is over 2 and a half times larger than the variance of the ratio estimates (187.362) suggesting that the ratio estimates are more precise. The bias of the ratio estimates is 13.538. 
+```{r}
+#ratio estimates
+(mean_r <- mean(results$t.ratio))
+se2 <- s.y^2+b^2*s.x^2-2*b*r*s.y*s.x
+(var_r <- N^2*(1-3/9)*(mean(y)/mean(x.samp))^2*se2/3)
+(bias <- N*mean(y.samp)*(t.x/(N*mean(x.samp)))-t.y)
+mean_r - t.y
+#ny estimates
+(mean_ny <- mean(results$t.srs))
+(var_ny <- sd(results$t.srs)^2)
+```
+
+**e)** This approximation (0.682) is much smaller than and relatively not close to the true bias from part d (13.538).
+```{r}
+(bias_yhat <- (1-(3/9))*(1/(3*mean(x)))*(b*s.x^2-r*s.x*s.y))
+N*bias_yhat
+```
+
+
+### Problem 6
+*Lohr textbook ch. 4 exercise 8(a,b,d). For part (d), ignore the regression estimator when answering the question.*
+
+**a)** 
+```{r}
+library(SDaA)
+
+hist(agsrs$farms87, main = "Distribution of # of Farms in 1987", xlab = "# of Farms")
+```
+
+**b)** The estimate total number of acres devoted to farming in 1992 is 96,015,5061 acres.
+```{r}
+(tacres_est <- 3078*mean(agsrs$acres92)*(2087759/(3078*mean(agsrs$farms87))))
+```
+
+**d)** The ratio estimation with auxilary variable acres87 would yield the most precision because it is most correlated with the total number number of acres devoted to farming in 1992. They both have the same sample size and are both in units of acres whereas the number of farms is in units of farms. 
+
+### Problem 7
+*Lohr textbook ch. 4 exercise 10(a,b)*
+
+**a)**
+```{r}
+cherry <- read.csv("http://math.carleton.edu/kstclair/data/cherry.csv")
+
+plot(cherry$volume, cherry$diameter, main = "Volume vs Diameter for 31 Cherry Trees", xlab = "Volume (cubic feet)", ylab = "Diameter (inches)")
+```
+
+**b)** The estimate total volume for all trees in the forest is 95272.16 cubic feet with a 95% confidence interval of (67406.37, 123137.9).
+```{r}
+#estimate
+(tot_est_volume <- (2967)*(mean(cherry$volume))*(41835/(2967*mean(cherry$diameter))))
+
+b <- mean(cherry$volume)/mean(cherry$diameter)
+r <- cor(cherry$diameter,cherry$volume)
+s.y <- sd(cherry$volume)
+s.x <- sd(cherry$diameter)
+se2 <- s.y^2 + b*s.x^2-2*b*r*s.y*s.x
+
+#SE
+(se <- 2967*sqrt((1-(31/2967))*((41835/2967)/(sum(cherry$diameter)/31))*(se2/n)))
+
+#95% CI
+tot_est_volume - 1.96*se
+tot_est_volume + 1.96*se
+```
+
+
+### Problem 8
+Under a SRS design, derive the conditions neeed for $SE(\hat{\bar{y}}_{r})$, the SE of the ratio estimate of mean, to be less than $SE(\bar{y})$, the SE of the sample mean. You can assume that $\bar{x}_U/\bar{x}\approx 1$.
+
+(work shown on separate sheet) The condition needed is that the standard error of e must be less than the standard error of y bar. Another way of saying this is the ratio of Se over S must be less than 1. 
