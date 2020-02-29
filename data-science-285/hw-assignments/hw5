@@ -1,0 +1,299 @@
+---
+title: "Homework 5"
+author: "Jay Na"
+date: "Due by 2:20 pm, Fri. 3/1"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, error = TRUE)
+```
+
+
+Push your knitted homework assignment (.Rmd and .md files) to GitHub by the given deadline.
+
+Also let me know: 
+
+**Who you worked with:**
+
+Aaron Prentice, Christian Zaytoun, Dylan Rye
+
+### Problem 1
+Consider the `NHANES` data (from the same-named package) used in chapter 8. See the help file for this data for more info. 
+
+```{r, message=FALSE}
+library(NHANES)
+library(tidyverse)
+library(class)
+library(caret)
+library(rpart)
+library(nasaweather)
+```
+
+Now suppose you are working for Target as a data scientist and you are tasked with predicting which customers are pregnant based mainly on demographic and physical patterns observed in the publicly available NHANES data. (A real data scientist for Target would also have buying profiles!) For this problem you want to predict `PregnantNow` using the characteristics: `Age`, `Education`, `HHIncomeMid`,  `MaritalStatus`, `Bmi`, and `Height`.
+
+Preliminary steps: Recode `PregnantNow` to have two levels (yes, no) and make the `unknown` level NAs. Recode `MaritalStatus` to just be `married` or `notmarried`. Finally, create a subset of the data for females that only contains complete cases (i.e. no NAs) for the variables described above that you will use in this problem.
+
+```{r}
+nhanes <- NHANES %>% 
+  mutate(pregnant = recode_factor(PregnantNow, No = "No", Yes = "Yes", Unknown = NA_character_), 
+    married = recode_factor(MaritalStatus, Married = "married", .default="notmarried"),)
+
+nhanes <- nhanes %>% 
+  mutate(
+    married = ifelse(married == "married", 1, 0),
+    edu.some.hs = ifelse(Education == "9 - 11th Grade", 1, 0),
+    edu.hs = ifelse(Education == "High School", 1, 0),
+    edu.some.college = ifelse(Education == "Some College", 1, 0),
+    edu.college = ifelse(Education == "College Grad", 1, 0),
+    SurveyYr = as.character.factor(SurveyYr),
+    SurveyYr = parse_number(SurveyYr)
+  )
+
+nhanes_f <- nhanes %>% 
+  filter(Gender == "female") %>% 
+  select(pregnant, Age, edu.some.hs, edu.hs, edu.some.college, edu.college, BMI, HHIncomeMid, married, Height, SurveyYr) %>% 
+  drop_na()
+
+#a. Split the data into a training and test set by using the 2009-10 `SurveyYr` as the training data set and the 2011-12 year as the test set. Perform any preprocessing of the training and test sets at this time.
+
+set.seed(1161998)
+
+train_f <- nhanes_f[nhanes_f$SurveyYr == "2009",]
+test_f <- nhanes_f[nhanes_f$SurveyYr == "2011",]
+
+train_means <- train_f %>% summarize_if(is.numeric, mean, na.rm = TRUE)
+train_sds <- train_f %>% summarize_if(is.numeric, sd, na.rm = TRUE)
+
+standardize <- function(x, na.rm = FALSE) {
+  (x - mean(x, na.rm = na.rm)) / sd(x, na.rm = na.rm)
+}
+
+train_strd <- train_f %>%
+  mutate_if(is.numeric, standardize, na.rm = TRUE)
+
+for(i in colnames(train_means)) {
+  test_f[[i]] <- (test_f[[i]] - train_means[[i]]) / train_sds[[i]]
+}
+
+#b. Fit a 5-nearest neighbors classifier on the training set.  Compute the confusion matrix, accuracy, sensitivity and specificity for the training data.
+train_f_class <- train_strd %>% pull(pregnant) 
+train_f_preds <- train_strd %>% select(-pregnant, -SurveyYr)
+test_f_preds  <- test_f %>% select(-pregnant, -SurveyYr)
+
+nn5_class <- knn(train = train_f_preds, test = train_f_preds, cl = train_f_class, k = 5)
+
+train_strd <- train_strd %>%
+  mutate(nn5 = nn5_class)
+
+#confusion matrix
+train_strd %>%
+  rename(truth = pregnant, prediction = nn5) %>%
+  count(truth, prediction) %>%
+  spread(key = prediction, value = n)
+
+#accuracy, sensitivity, specificity test
+train_strd %>% 
+  summarize(accuracy = mean(pregnant == nn5), sensitivity = sum(pregnant == "Yes" & nn5 == "Yes") / sum(pregnant == "Yes"), specificity = sum(pregnant == "No" & nn5 == "No") / sum(pregnant == "No"))
+
+#c.  Compute the confusion matrix, accuracy, sensitivity and specificity for the test data using your classifier from part b.
+
+nn5_class_test <- knn(train = train_f_preds, 
+                  test = test_f_preds, 
+                  cl = train_f_class,
+                  k = 5)
+
+test_new <- test_f %>%
+  mutate(nn5_test = nn5_class_test)
+
+#confusion matrix
+test_new %>%
+  rename(truth = pregnant, prediction = nn5_test) %>%
+  count(truth, prediction) %>%
+  spread(key = prediction, value = n)
+
+#accuracy, sensitivity, specificity test
+test_new %>% 
+  summarize(accuracy = mean(pregnant == nn5_test), sensitivity = sum(pregnant == "Yes" & nn5_test == "Yes") / sum(pregnant == "Yes"), specificity = sum(pregnant == "No" & nn5_test == "No") / sum(pregnant == "No"))
+
+#d.The overall rate of pregnancies in your data constructed in part a should be around 5%. Dilbert, the lazy data scientist, decided simply to classify woman as "pregnant" based on this 5% rate (since, hey, it will result in about 5% of the predictions being pregnant which matches the rate in the data!). Compute the confusion matrix, accuracy, sensitivity and specificity for the test set. Make sure to explain/show your work for these calculations.
+
+
+#Truth: 23 women are pregnant, 691 are not
+#Prediction (Dilbert): 36 women of out the 714 women (5%) are pregnant, 678 are not
+
+#Chance of getting a true positive pulling out 5% of women as pregnant when 23 out of the 714 women are pregnant:
+
+#.16% = (23/714)(.05)
+#(.0016)(714) = estimately 1 true positive
+
+#Chance of getting a false positive pulling out 5% of women as pregnant when 23 out of the 714 women are pregnant:
+
+#4.8% = (691/714)(.05)
+#(.048)(714) = estimately 35 false positives
+
+#Chance of getting a true negative dismissing 95% of women as not pregnant when 691 out of the 714 #women are not pregnant:
+
+#91.9% = (691/714)(.95)
+#(.919)(714) = estimately 656 true negatives
+
+#Chance of getting a false negative dismissing 95% of women as not pregnant when 691 out of the 714 #women are not pregnant:
+
+#3.1% = (23/714)(.95)
+#(.031)(714) = estimately 22 false negatives
+
+#Confusion matrix
+pregnant_cm <- matrix(c(1,35,22,656),ncol=2,byrow=TRUE)
+colnames(pregnant_cm) <- c("Actual Yes","Actual No")
+rownames(pregnant_cm) <- c("Predicted Yes","Predicted No")
+pregnant_cm <- as.table(pregnant_cm)
+pregnant_cm
+
+#Accuracy
+#(TP+TN)/(TOTAL) = (1+656)/(714) = estimately 92.1%
+
+#Sensitivity
+#(TP)/(TP+FN) = (1)/(1+22) = estimately 4.3%
+
+#Specificity
+#(TN)/(TN+FP) = (656)/(656+33) = estimately 95.2%
+```
+
+
+### Problem 2
+Consider the model you fit in problem 2. Remember that the `caret` package can help you run cross validation correctly.
+
+**a.** Perform 5-fold cross validation to tune your KNN classifier using the training data set. Be sure to consider $k = 1, 3, 5, 7, 9, 11, 13, 15$. Report the cross-validated accuracy of the chosen model.
+
+```{r, warning = FALSE}
+train_cv <- train_f %>% select(-SurveyYr)
+test_cv <- test_f %>% select(-SurveyYr)
+
+k_grid <- data.frame(k = seq(1, 15, by = 2))
+
+more_metrics  <- function(data, lev = NULL, model = NULL){
+  def <- defaultSummary(data, lev, model)
+  met2 <- twoClassSummary(data, lev, model) # sensitivity, specificity, ROC
+  met3 <- prSummary(data, lev, model)       # precision, recall, AUC
+  c(def, met2, met3)
+}
+
+train_control <- trainControl(
+  method = "cv",                  # we're performing cross validation
+  number = 5,                    # with 10 folds
+  summaryFunction = more_metrics, # pass in our function
+  savePredictions = TRUE,         # save all predictions
+  classProbs = TRUE               # compute class probabilities
+)
+
+knn_cv <- train(
+  pregnant ~ .,                      # response ~ explanatory variables
+  data = train_cv,                    # data set used for k-fold cv
+  method = "knn",                  # specifying knn model
+  preProc = c("center", "scale"),  # within each fold, standardize
+  tuneGrid = k_grid,               # grid for parameters being tuned
+  trControl = train_control        # pass in training details
+)
+
+knn_cv$results %>% select(k, Accuracy)
+
+```
+
+**b.** Using the test set, calculate the test accuracy of the classifier you chose in part a. How does this accuracy compare to the cross-validated accuracy?
+
+```{r, warning= FALSE}
+k_grid <- data.frame(k = seq(1, 15, by = 2))
+
+more_metrics  <- function(data, lev = NULL, model = NULL){
+  def <- defaultSummary(data, lev, model)
+  met2 <- twoClassSummary(data, lev, model) # sensitivity, specificity, ROC
+  met3 <- prSummary(data, lev, model)       # precision, recall, AUC
+  c(def, met2, met3)
+}
+
+train_control <- trainControl(
+  method = "cv",                  # we're performing cross validation
+  number = 5,                    # with 10 folds
+  summaryFunction = more_metrics, # pass in our function
+  savePredictions = TRUE,         # save all predictions
+  classProbs = TRUE               # compute class probabilities
+)
+
+knn_cv2 <- train(
+  pregnant ~ .,                      # response ~ explanatory variables
+  data = test_cv,                    # data set used for k-fold cv
+  method = "knn",                  # specifying knn model
+  preProc = c("center", "scale"),  # within each fold, standardize
+  tuneGrid = k_grid,               # grid for parameters being tuned
+  trControl = train_control        # pass in training details
+)
+
+knn_cv2$results %>% select(k, Accuracy)
+
+```
+
+This accuracy overall is estimately a hundredth more accurate than the cross-validated accuracy generated in part a. 
+
+### Problem 3
+Take a look at textbook exercise 8.5. For parts 1-2 below, we will use the response `y_td` as our response to make a classifier for **tropical depressions**:
+
+```{r, fig.width = 10, fig.height = 7}
+nasaweather::storms %>% count(type)
+storms <- nasaweather::storms %>% 
+  mutate(y_td = recode_factor(type, .default = "other", `Tropical Depression` = "Tropical Depression"))
+storms %>% count(type, y_td)
+
+
+#a. Create a decision tree to classify a storm as a tropical depression (or not) using `wind` and `pressure` as your predictors. Draw a tree diagram of the model and describe what wind speed and pressure characteristics can be used to identify a tropical depression. (Note: use the default control parameters for `rpart`.)
+
+
+set.seed(149123)
+
+train_storm <- storms %>% sample_frac(0.75)
+test_storm <- storms %>% setdiff(train_storm)
+
+tree_storm <- rpart(y_td ~ wind+pressure, data = train_storm, method = "class")
+
+plot(tree_storm)
+text(tree_storm, pretty = 0)
+
+
+#A storm is likely to be identified as a tropical depression when wind speeds are between 22.5 mph and 32.5 mph and pressure is under 1012 mb.
+
+#b. Visualize your model in part 1 in the predictor space. Your figure should look similar to either figure 8.10. (Note: use `geom_jitter` rather than `geom_point` to account for over-plotting)
+
+ggplot(data = train_storm, aes(x = wind, y = pressure, shape = y_td, color = y_td)) +
+  geom_jitter() +
+  geom_segment(aes(x = 32.5, y = 900, xend = 32.5, yend = 1050), color = "black") +
+  geom_segment(aes(x = 22.5, y = 900, xend = 22.5, yend = 1050), color = "black") +
+  geom_segment(aes(x = 22.5, y = 1012, xend = 32.5, yend = 1012), color = "black")
+```
+
+**c.** Create one decision tree to classify *all four* types of storms. Use `type` as your response and `wind` and `pressure` as your predictors. Draw a tree diagram of the model.   Is it easy to distinguish between storms using these two measures? Which measure, wind speed or pressure, seems most important when classifying storm types? (Note: use the default control parameters for `rpart`.)
+
+```{r fig.width = 10, fig.height = 7}
+set.seed(79212)
+
+tree_storm2 <- rpart(type ~ wind + pressure, data= train_storm)
+
+plot(tree_storm2)
+text(tree_storm2, pretty = 0)
+```
+
+Yes, it is fairly easy to distinguish between storms using these two measures. Wind appears to be the more important distinguishing factor since two storm types can be classified with just wind measurements.
+
+**d.** Compute the accuracy of your model from part c. Then using language that a non-statistician/data scientist would understand, describe what accuracy measures and how you can classify these four types of storms using their wind speed and pressure characteristics.
+
+```{r}
+set.seed(143143)
+
+storm_pred <- predict(tree_storm2, newdata = test_storm, type = "class")
+
+test_stormf <- test_storm %>%
+  mutate(storm_prediction = storm_pred)
+
+tstorm_accuracy <- test_stormf %>% summarize(accuracy = mean(type == storm_prediction))
+tstorm_accuracy
+```
+
+Accuracy measures the rate at which cases will be identified correctly upon the given predictors, which in this case is estimately 88.06%. This means that this model will correctly identify the type of storm 88.06% of the time given the predictors, wind and pressure. Furthermore, if the wind speed is greater than or equal to 62.5 mph, it is likely the storm is a hurricane. If wind speeds are less than 32.5 mph, the model predicts the storm is a tropical depression. If pressure is below 977.5 or wind speed is between 32.5 mph and 47.5 mph, the storm is likely an extratropical storm. If pressure is greater than 989.5 or wind is between 47.5 mph and 62.5 mph then a tropical storm is predicted.
