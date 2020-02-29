@@ -1,0 +1,58 @@
+---
+title: "The Effect on Mortality of Relative Pollution Potentials"
+author: "Jay Na"
+date: "10/19/2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+#uploading problem to R
+library(Sleuth3)
+pollute <- ex1217
+
+#using package for VIFs
+library(car)
+
+```
+##Introduction:
+
+In this case study, we analyze the effect on morality of the relative pollution potentials of hydrocarbons, NOx, and SO2 in 60 cities in the United States, after controlling for 12 socioeconomic and climatological measurements. Data was collected from the years 1959-1961, which was when parts of the United States experienced severe pollution due to the industrialism at that time. In this case, the total age-adjusted mortality from all causes per 100,000 population was collected. With this, we observe its relationship with pollution potentials (Sulfur Dioxide, Nitrogen Oxides, Hydrocarbons) and determine whether there is a correlation, after accounting for the weather and demographic variables. 
+
+
+
+
+```{r, echo = TRUE}
+
+
+
+```
+##Results:
+
+When plotting the total age-adjusted mortality observed from these data against all explanatory variables, it is evident that the relationships between all three pollution potentials and mortality show heteroskedasticity, violating assumptions; and so, the variables hydrocarbons, NOx, and SO2 are transformed logarithmically. When looking at the scatterplots, there are signs of multicollinearity between all three pollution variables. After transforming the data, the VIFs for log(HC) and log(NOX) is estimately 15.99 and 16.09 respectively. This shows significant collinearity between the two variables; and so, the HC variable was removed. In order to correctly observe whether pollution potentials are correlated, the model condenses to estimately E(Morality|log(NOx), log(SO2), Precipitation, JulyTemp, Over65, Education, Sound, NonWhite, Poor) = 1336.25 + 39.31log(NOx) + 3.81log(SO2) + 1.88Precipitation  - 2.05JulyTemp + 0.12Over65 - 14.50Education - 1.95Sound + 4.61NonWhite - 4.59Poor + E, where the Akaike Information Criterion (AIC) is the lowest. Below is the scatter plots of the remaining pollution potentials(NOx and SO2) against mortality showing the correlations between each variable, while accounting for socioeconomic and climatological elements.
+
+```{r, echo=FALSE, fig.height=5, fig.width=5}
+
+#plotting each variable against Mortality
+pairs(Mortality ~ log(NOX) + log(SO2), data = pollute, main = "Pollution Potentials against Mortality (60 US Cities)")
+
+#new model is defined
+newmodel <- lm(Mortality ~ log(NOX) + log(SO2) + Precip + JulyTemp + Over65 + Educ + Sound + NonWhite + Poor, data = pollute)
+
+##used repeatedly to determine which variables to elimate
+#AIC(newmodel)
+
+##used to find collinearity within the explanatory variables
+#vif(newmodel)
+
+##used to look at F values
+#anova(newmodel)
+```
+
+
+For this model, every death increase in the total age-adjusted mortality is associated with a 39.31 increase in the logarithm of Nitrogen oxides and a 3.81 increase in the logarithm of SO2. The R^2 value for the model is estimately .72, which means that 72% of variability in mortality can be “explained” by the compounding variables. According to the Q-Q plot and residual plots, assumptions are met. 
+
+##Discussion:
+
+With a p-value of 5.42e-11, the new model suggests that the null hypothesis of which there is no effect of pollution potentials on mortality is rejected. There is a linear, somewhat strong, positive correlation between pollution potentials and mortality, which means that increase in pollution is related to an increase in mortality, accounting for socioeconomic and climatological measurements that the people in these cities have. These data have problems with influential observations and with lack of independence due to spatial correlation; however, there problems are ignored. 
