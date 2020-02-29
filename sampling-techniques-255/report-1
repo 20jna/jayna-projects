@@ -1,0 +1,69 @@
+---
+title: "Report 1 (R Appendix)"
+author: "Jay Na"
+date: "4/21/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, include = FALSE}
+library(SDaA)
+library(survey)
+library(dplyr)
+library(ggplot2)
+```
+
+```{r}
+#creating data frame in R of randomly chosen units & their corresponding number of people
+group <- c("upper","upper","upper","upper","upper","upper","upper","upper","upper",
+           "upper","lower","lower","lower","lower","lower","lower","lower","lower",
+           "lower","lower","lower")
+unit <-  c(16,37,52,60,141,145,148,185,187,204,34,49,74,80,88,104,161,162,204,209,221)
+people <- c(4,11,10,5,14,15,8,12,18,20,24,28,22,22,20,16,21,12,19,27,20)
+pop.strat <- data.frame(group, unit, people, stringsAsFactors=FALSE)
+```
+
+```{r}
+#EDA (boxplot by stratum)
+boxplot(people~group, data = pop.strat, main = "Sampling Distribution of People 
+        per Unit by Strata (Figure 1)", ylab = "Number of People", xlab = "Strata")
+```
+
+
+```{r}
+#stratum means and total estimate
+(group1_mean <- (4+11+10+5+14+15+8+12+18+20)/10) #upper stratum mean estimate
+(group2_mean <- (24+28+22+22+20+16+21+12+19+27+20)/11) #lower stratum mean estimate
+
+(total_estimate <- group1_mean*208 + group2_mean *224) #total population estimate
+```
+
+```{r}
+#Variance of each strata
+pop.strat.1 <- pop.strat %>% filter(group == "upper")
+pop.strat.1$mean_diff <- (pop.strat.1$people - 11.7)^2
+(strat1.ssquared <-sum(pop.strat.1$mean_diff) * 1/9) #upper stratum variance
+
+pop.strat.2 <-  pop.strat %>% filter(group == "lower")
+pop.strat.2$mean_diff <- (pop.strat.2$people - 21)^2
+(strat2.ssquared <-sum(pop.strat.2$mean_diff) * 1/10) #lower stratum variance
+```
+
+```{r}
+#total population SE
+(se.total <- sqrt((strat1.ssquared*208^2) + (strat2.ssquared*224^2)))
+```
+ 
+```{r}
+#T-Star
+qt(c(.025, .975), df=19)
+```
+
+```{r}
+#95% CI for population
+total_estimate - (2.093024*se.total) #lower bound
+total_estimate + (2.093024*se.total) #upper bound
+```
