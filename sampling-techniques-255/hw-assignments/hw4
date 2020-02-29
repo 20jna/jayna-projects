@@ -1,0 +1,212 @@
+---
+title: 'Math 255 HW #4'
+author: "Jay Na (worked with Dylan Rye)"
+date: "4/16/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r,message=FALSE}
+library(SDaA)
+library(dplyr)
+library(survey)
+library(ggplot2)
+```
+   
+**Problem 1 Lohr textbook ch. 3 exercise 5.** *I suggest looking at the R code in the day 7 Stratified estimation handout solution to help you calculate your answers to part (b). You should show a couple steps (summations) in the formulas for estimate/SE but you don’t need to show all the work.*
+
+**a)** The sampled population is all the 44,000 members that were randomly stratified by the ACLS into the seven different disciplines of the ACLS societies.
+
+**b)** An estimate of the percentage of persons in the sampled population that agree with the statement is 33.37%. The standard error of my estimate is 0.004.
+```{r}
+#estimate
+phat <- (0.37)*(9100/44000) +(0.23)*(1950/44000)+(0.23)*(5500/44000)+(0.29)*(10850/44000)+(0.19)*(2100/44000)+(0.43)*(5500/44000)+(0.41)*(9000/44000)
+phat
+
+#standard error
+se <- sqrt((1-((9100*.37)/44000))*(9100/44000)^2*((phat*(1-phat))/(.37*9100-1)) + (1-((1950*.23)/44000))*(1950/44000)^2*((phat*(1-phat))/(.23*1950-1)) + (1-((5500*.23)/44000))*(5500/44000)^2*((phat*(1-phat))/(.23*5500-1)) + (1-((10850*.29)/44000))*(10850/44000)^2*((phat*(1-phat))/(.29*10850-1)) + (1-((2100*.19)/44000))*(2100/44000)^2*((phat*(1-phat))/(.19*2100-1)) + (1-((5500*.43)/44000))*(5500/44000)^2*((phat*(1-phat))/(.43*5500-1)) + (1-((9000*.41)/44000))*(9000/44000)^2*((phat*(1-phat))/(.41*9000-1)))
+se
+```
+
+
+**Problem 2 Lohr textbook ch. 3 exercise 9.** *Don’t forget to compare your stratified estimates and SEs to those from HW 3 (SRS). You can check the HW 3 solution key for these answers.*
+
+**a)** The estimate population mean of this variable is 298547 and its standard error is 16293. Its 95% CI is (266613.5, 330490.7). The SRS of this variable yielded a higher mean and standard error than when it was stratified, which suggests that its distribution is also less precise. It's 95% confidence interval is also wider than the stratified CI.
+```{r}
+agstrat$N <- recode(agstrat$region, NC = 1054, NE = 220, S = 1382, W = 422)
+
+agstrat <- agstrat %>% group_by(region) %>% mutate(n = n())
+
+agstrat$wts <- agstrat$N/agstrat$n
+
+design.strat<- svydesign(id=~1, fpc= ~N, weights= ~wts, strata= ~region, data=agstrat)
+
+acres87sum <- svymean(~acres87, design.strat)
+acres87sum #summary
+
+hist(agstrat$acres87, main = "Ch.3 Excercise 9a", xlab = "Number of Acres (1987)")
+
+confint(acres87sum) #CI
+```
+
+**b)** The estimate population mean of this variable is 637.16 farms and its standard error is 24.277. Its 95% CI is (587.581, 684,747). In this case, the SRS of this variable yielded a larger mean and a larger standard error than in the stratified sampling, suggesting that SRS is less precise . The stratified distribution yielded a wider confidence interval, and both its bounds are larger than the bounds of the CI in the SRS.
+```{r}
+farms92sum <- svymean(~farms92, design.strat)
+farms92sum #summary
+
+hist(agstrat$farms92, main = "Ch.3 Exercise 9b", xlab = "Number of Farms (1992)")
+
+confint(farms92sum) #CI
+```
+
+**c)** The estimate population mean of this variable is 56.698 farms with a standard error of 3.558. Its 95% CI is (49.725, 63.671). This yielded a roughly similar but larger mean value and a roughly similar but smaller standard error than in the SRS, which suggests that the SRS is less precise. The SRS confidence interval is also wider than the CI of the stratified.
+```{r}
+largef92sum <- svymean(~largef92, design.strat)
+largef92sum #summary
+
+hist(agstrat$largef92, main = "Ch.3 Exercise 9c", xlab = "Number of Large Farms (1992)")
+
+confint(largef92sum) #CI
+```
+
+**d)** The estimate population mean of this variable is 56.863 farms with a standard error of 7.201. Its 95% CI is (42.748, 70.977). This stratified distribution yielded a higher mean and a larger standard error than in the SRS, suggesting it is less precise. Its confidence interval is also wider than of the SRS as well.
+```{r}
+smallf92sum <- svymean(~smallf92, design.strat)
+smallf92sum #summary
+
+hist(agstrat$smallf92, main = "Ch.3 Exercise 9d", xlab = "Number of Small Farms (1992)")
+
+confint(smallf92sum) #CI
+```
+
+**Problem 3 Lohr textbook ch. 3 exercise 15.**
+**a)** The advantages of sampling the same number of stores in each stratum is that there is equal allocation and so there is less variability. However, when sampling with the same number of stores, you do not talk into account the proportional allocation of each strata that would be more representative to the population.
+
+**b)** The estimate for the population mean, ybar, is 3.939. Its 95% CI is (3.854, 4.023).
+```{r}
+ybarpop <- (190/1408)*(3.925) + (407/1408)*(3.938) + (811/1408)*(3.942) #ybar
+ybarpop
+
+seybar <- sqrt((190/1408)^2*(0.037)^2 + (407/1408)^2*(0.052)^2 + (811/1408)^2*(0.070)^2) #standard error
+
+ybarpop - 1.96*seybar #lower bound of CI
+ybarpop + 1.96*seybar #upper bound of CI
+```
+
+**c)** There's no evidence to suggest a difference in prices in the three strata because they all fit in the estimated confidence interval of the stratified distribution of the mean.
+
+**Problem 4 Lohr textbook ch. 3 exercise 16.**
+
+**a)** The total estimate of otter dens in Shetland is 253.59 otters. The SE is 18.555.
+```{r}
+otters$n <- nrow(otters)
+otters$N <- recode(otters$habitat, "1" = 89, "2" = 61, "3" = 40, "4" = 47)
+otters$wts <- otters$N/otters$n
+
+design.stratotters <- svydesign(id = ~1, fpc = ~N, weights = ~wts, strata = ~habitat, data = otters)
+svytotal(~holts, design.stratotters)
+```
+
+**b)** Categorizing all the different types of terrains into 4 stratums can lead to bias since certain mixtures of terrains could be a possible reason why certain areas have more otter dens than others. A measurement bias may be that certain areas may not be examined as well as others and some may be measured incorrectly since the coastline is so large. Also, weather and temperature and time of season may be factors that may impact the number of dens and can differ based on when the started and when it ended. Overall, there are many possible sources of bias in this study that are inevitably hard to avoid.
+
+**Problem 5 Take a look at Lohr textbook ch. 3 exercise 20 data description, then answer the questions below. The data set variable description is here. Data is located in the path below. Also run the options command given, otherwise you won’t obtain estimates due to the fact that at least one stratum has only 1 observation. The default option is the fail when this occurs, since variance within this stratum can’t be calculated, but remove removes this stratum from the calculation of an estimate’s SE.**
+
+```{r}
+radon <- read.csv("http://math.carleton.edu/kstclair/data/radon.csv")
+options(survey.lonely.psu="remove")
+```
+
+**(a) Discuss possible sources of nonsampling error in this survey.** One source of nonsampling error is the undercoverage of Minnesota households that don't have their telephones in their county directories. Another is the fact that certain households are unwilling to participate or some cannot be contacted. This non-responsiveness is another possible source of nonsampling error.
+
+**(b) Estimate the average radon level for all Minnesota homes and include a SE.**
+The estimated average radon level for all Minnesota homes is 3.623. The standard error is 0.242.
+```{r}
+radon <- radon %>% group_by(countyname) %>% mutate(wts = sampsize/popsize)
+
+design.strat2 <- svydesign(id=~1, fpc= ~popsize, weights= ~wts, strata= ~countyname, data= radon)
+
+radonsum <- svymean(~radon, design.strat2)
+radonsum #summary
+```
+
+**(c) Estimate the total number of Minnesota homes that have radon levels of 4 picocuries per liter (pCi/L) or higher and include a 95% confidence interval. (Note that the EPA recommends keeping home radon levels below 4 pCi/L.)** The estimated total number of Minnesota homes that have radon levels of 4 picocuries per liter or higher is 270.43 with a 95% CI of (219.55, 321.31).
+```{r}
+r4 <- ifelse(radon$radon >= 4, 1, 0)
+design.strat2 <- update(design.strat2, radon4 = r4)
+tothomes <- svymean(~radon4, design.strat2)
+tothomes*1003
+
+confint(tothomes)*1003
+```
+
+**(d) Identify which counties only have 1 home sampled.**
+The three counties that have only 1 home sampled are Mahnomen, Murray, and Wilkin.
+
+**(e) Use the svyby command to get estimated mean radon levels within each county (with at least one observation). Review part 6 in the survey package R handout for stratified designs. Use the code below as a template for saving the svyby output, which is a data frame, and plotting estimate plus/minus a SE in an error bar plot:**
+```{r}
+svyby.out <- svyby(~radon, ~countyname, design.strat2, svymean)
+ggplot(svyby.out, aes(y=countyname, x=radon)) +
+geom_point() +
+geom_errorbarh(aes(xmax=radon + se, xmin = radon - se))
+```
+
+**(f) Identify which county has the largest SE for estimating the mean randon level of homes in that county. Do the same for the county with the smallest SE that is non-zero (the svyby command report SE of 0 for the counties with 1 observation). For these two counties, compare the sample sizes and sample stardard deviation of radon and explain how these affect their SEs.**
+The county Marshall has the largest SE for estimating the mean randon levels. The county Sherburne has the smallest SE that is non-zero. The sample size of Marshall is 9 and its sample standard deviation is 16.193. The sample size of Sherburne is also 9 but its standard deviation is 0.557. The small sample sizes yield extremeties in the standard deviation. With that said, a higher standard deviation yields a higher standard error and a lower standard deviation yields a lower SE.
+```{r}
+sd(radon$radon[radon$countyname == "Marshall"])
+sd(radon$radon[radon$countyname == "Sherburne"])
+```
+
+**Problem 6 Revisit problem 2 above. Compute and interpret the design effect using the survey package for each of four estimates computed for exercise 9. Which estimate has the smallest DEff and which has the largest? Use the EDA (graphs) you produced for problem 2 to explain why these variables have the smallest and largest DEff.**
+The design effect of 0.80 for acres87 tells us that we see about a 20% reduction in variance when using a stratified sample of 300 counties rather than a SRS of size 300 counties. The design effect of 0.98 for farms92 tells us that we see about a 2% reduction in variance when using a stratified sample of 300 counties rather than a SRS of size 300 counties. The design effect of 0.87 for largef92 tells us that we see about a 13% reduction in variance when using a stratified sample of 300 counties rather than a SRS of size 300 counties. The design effect of 0.98 for smallf92 tells us that we see about a 2% reduction in variance when using a stratified sample of 300 counties rather than a SRS of size 300 counties. The estimate pop mean for number of small farms in 1992 had the largest DEff and the estimate pop mean for number of acres in 1987 had the smallest DEff. The variable with the smallest DEff was the least skewed and the variable with largest Deff was the most skewed.
+```{r}
+svymean(~acres87, design.strat, deff = T)
+svymean(~farms92, design.strat, deff = T)
+svymean(~largef92, design.strat, deff = T)
+svymean(~smallf92, design.strat, deff = T)
+```
+
+**Problem 7 Lohr textbook ch. 3 exercise 35 parts (a)-(d).**
+*Use the following code to get the population data, including log salary, and draw your stratified sample for part (a). Note that since the population sizes within each stratum (team) are similar in size we can just use sample sizes of 5 within each stratum for proportional allocation.*
+
+**a)**
+```{r}
+pop <- read.csv("http://math.carleton.edu/kstclair/data/baseball.csv",
+header=FALSE, na.strings = c("NA"," ", "."))
+names(pop) <- c("team","league","player","salary","POS","G","GS", "InnOuts","PO","A","E","DP","PB","GB","AB","R","H", "SecB","ThiB","HR","RBI","SB","CS","BB","SO","IBB", "HPB","SH","SF","GIDP")
+table(pop$team) # all roughly the same size populations
+pop$logsal <- log(pop$salary)
+
+set.seed(494949)
+baseball.strat <- pop %>% group_by(team) %>% sample_n(size=5) %>% ungroup()
+str(baseball.strat)
+```
+
+**b)** The estimate mean of the variable logsal is 13.877 with a 95% CI is (13.695, 14.059).
+```{r}
+baseball.strat$n <- 150
+baseball.strat$N <- 797
+baseball.strat$wts <- baseball.strat$N/baseball.strat$n
+
+design.strat7 <- svydesign(id=~1, fpc= ~N, weights= ~wts, strata= ~team, data= baseball.strat)
+
+baseballsum <- svymean(~logsal, design.strat7)
+baseballsum
+
+confint(baseballsum, df = 149)
+```
+
+**c)** The estimate proportion of players in the data set who are pitchers is 0.4. The 95% CI is (0.321, 0.479). 
+```{r}
+pitcher <- ifelse(baseball.strat$POS == "P", 1, 0)
+design.strat7 <- update(design.strat7, pitcher_status = pitcher)
+propp <- svymean(~pitcher_status, design.strat7)
+propp
+
+confint(propp, df = 149)
+```
+
+**d)** The logsal estimate mean value in Ch2 is relatively the same as but slightly lower than this estimated mean value. The CI for both are relatively the same size but the bounds in Ch2 are slightly higher. The estimated proportion of players in the SRS is also relatively equal to but slightly larger than the proportion in the stratified sampling. The CI of the stratified is slightly wider than the CI of the SRS, which may suggest it being less precise, but they are the intervals are roughly similar.
