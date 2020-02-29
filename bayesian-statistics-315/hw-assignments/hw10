@@ -1,0 +1,176 @@
+---
+title: 'Homework #10'
+author: "Jay Na"
+date: "11/3/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message = FALSE}
+library(MCMCpack)
+library(rjags)
+```
+
+**Exercise 4e** 
+
+The MCMC samples are converging at a lower level and are less variant than the results we obtained from part c (HW#8).
+
+```{r}
+set.seed(14234)
+
+# loading data
+y <- 1:10
+i <- 1:10
+n <- 10
+
+# specify the model string
+ex4_string <- textConnection("model{
+  # Specifying the likelihood
+  for(i in 1:n) {
+    y[i] ~ dnorm(0, tau[i])
+  }
+
+  # Specify the priors
+  for(i in 1:n) {
+    tau[i] ~ dgamma(a, b)
+  }
+  b ~ dgamma(1,1)
+  a <- 10
+
+  for(i in 1:n) {
+   sigma2[i] <- 1 / sqrt(tau[i])
+  }
+}")
+
+# Compile the MCMC code
+inits <- list(tau = c(rep(1/sd(y), 10)), b = 1)
+data  <- list(y = y, n = n)
+model <- jags.model(ex4_string, data = data, inits = inits, n.chains = 1)
+
+
+# Draw 1000 burn-in samples 
+update(model, 1000)
+
+# Draw 5000 posterior samples
+samples <- coda.samples(
+  model, 
+  variable.names = c("sigma2", "b"), 
+  n.iter = 10000, 
+  progress.bar = "none"
+)
+```
+
+```{r, fig.width = 5, fig.height = 7}
+# summarizing results
+summary(samples)
+par(mar = c(3,2,1,1))
+plot(samples)
+```
+
+**Exercise 6**
+
+**a)** This is a reasonable prior for theta because it takes account for all the proportions of made shots for every player in this study.
+
+**b)** m influences the prior for theta so theta is not based off the prior data alone. This allows our predictions to be more equivocal to what we might actually see.
+
+**e)** 
+
+```{r}
+# loading data
+y <- c(64, 72, 55, 27, 75, 24, 28, 66, 40, 13)
+n <- c(75, 95, 63, 39, 83, 26, 41, 82, 54, 16)
+q <- c(.845, .847, .880, .674, .909, .898, .770, .801, .802, .875)
+
+# specifying model string
+ex6_string <- textConnection("model{
+
+  # specifiying likelihood
+  for(i in 1:10) {
+    y[i] ~ dbinom(theta[i], n[i])
+    theta[i] ~ dbeta(exp(m)*q[i], exp(m)*(1-q[i]))
+  }
+  
+  # specifying prior
+  m ~ dnorm(0, 10)
+
+}")
+
+# Compile the MCMC code
+ex6_inits <- list(m = 0)
+ex6_data  <- list(y = y, n = n, q = q)
+ex6_model <- jags.model(ex6_string, data = ex6_data, inits = ex6_inits, n.chains = 1)
+
+
+# Draw 1000 burn-in samples 
+update(ex6_model, 1000)
+
+# Draw 10000 posterior samples
+ex6_samples <- coda.samples(
+  ex6_model, 
+  variable.names = c("theta", "m"), 
+  n.iter = 10000, 
+  progress.bar = "none"
+)
+```
+
+```{r, fig.width = 5, fig.height = 7}
+# summarizing the results
+summary(ex6_samples)
+par(mar = c(3,2,1,1))
+plot(ex6_samples)
+```
+
+**Exercise 10** 
+
+As you can from the traceplots below, the MCMC samplers all converged. According to this analysis, the rate of discovery over time decreases as we see lambda increase. And so, yes this analysis does provide evidence that the rate is changing over time.
+
+```{r}
+# loading data
+y <- c(64, 13, 33, 18, 30, 20)
+n <- 6
+
+# specifying model string
+ex10_string <- textConnection("model{
+  # specifying likelihood
+  for(i in 1:n) {
+    y[i] ~ dpois(lambda[i])
+  }
+  
+  # specifying priors
+  for(i in 1:n) {
+    lambda[i] <- exp(alpha + beta*t[i]) 
+  }
+  
+  alpha ~ dnorm(0, 100)
+  beta ~ dnorm(0, 100)
+  t <- c(1, 2, 3, 4, 5, 6)
+}")
+
+# Compile the MCMC code
+ex10_inits <- list(alpha = 1, beta = 1)
+ex10_data  <- list(y = y, n = n)
+ex10_model <- jags.model(ex10_string, data = ex10_data, inits = ex10_inits, n.chains = 1)
+
+
+# Draw 1000 burn-in samples 
+update(ex10_model, 1000)
+
+# Draw 10000 posterior samples
+ex10_samples <- coda.samples(
+  ex10_model, 
+  variable.names = c("lambda", "alpha", "beta"), 
+  n.iter = 10000, 
+  progress.bar = "none"
+)
+```
+
+```{r, fig.width = 5, fig.height = 7}
+# Inspect/summarize the results
+summary(ex10_samples)
+par(mar = c(3,2,1,1))
+plot(ex10_samples)
+```
+
