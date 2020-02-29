@@ -1,0 +1,46 @@
+---
+title: "Math 275 HW#5"
+author: "Jay Na"
+date: "4/21/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**5. Exercise 6.18 (a) and (c).**
+
+**a)** The estimate shape parameter is 2.670. The estimate rate parameter is 3.842.
+```{r}
+data(Service, package = "resampledata")
+
+mean <- mean(Service$Time)
+summation <- sum((Service$Time - mean)^2)
+n <- 174
+
+#estimate shape parameter
+(shape_par <- mean^2/(summation/n))
+  
+#estimate rate parameter
+(rate_par <- mean/(summation/n))
+```
+
+**c)** In the histogram, the majority of the distribution sits under the Method of Moments curve that is imposed. Also, the QQ Plot shows a relatively linear, positive correlation between the sample quantiles and theoretical quantities. This evidence suggests that the estimated distribution fits the data well.
+```{r, fig.height = 4, fig.width = 5}
+n <- dim(Service)[1] #sample size
+r_hat <- shape_par # MoM estimate
+lambda_hat <- rate_par # MoM estimate
+
+#histogram
+hist(Service$Times, main = "Distribution of Service Times
+     w/ MoM Curve", xlab = "Service Times (minutes)", freq=FALSE)
+curve(dgamma(x, shape = r_hat, rate = lambda_hat), col = "red", add = TRUE)
+
+#qqplot
+qqplot(Service$Times, qgamma(ppoints(n), shape = r_hat, rate = lambda_hat), 
+       xlab = "Theoretical Quantiles", ylab = "Sample Quantiles", 
+       main = "QQ Plot (6.18c)")
+```
+
+
