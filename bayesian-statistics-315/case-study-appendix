@@ -1,0 +1,104 @@
+---
+title: "Case Study 1 Appendix"
+author: "Jay Na"
+date: "10/21/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Case Study 1 
+
+```{r, message = FALSE}
+# loading libraries
+library(truncnorm)
+library(dplyr)
+
+# loading data
+scores <- read.csv("http://aloy.rbind.io/data/test_scores.csv")
+
+# mean and standard deviation of given data set
+mean(scores$score)
+sd(scores$score)
+```
+
+```{r, fig.align = 'center', fig.width = 5, fig.height = 3.5}
+# grid approximation of mu w/ constraints at 50 and 100
+mu <- seq(50, 100, by = .5)
+x <- dnorm(mu, 75, 50)
+
+# normalizing mu prior
+prior1 <- x/(sqrt(2*pi*50))
+
+# density plot of mu prior
+plot(prior1, type = "l", main = "MU Prior DSN", xlab = expression(mu), ylab = "Density")
+```
+
+```{r, fig.align = 'center', fig.width = 5, fig.height = 3.5}
+# grid approximation of sigma-squared w/ constraints at 0 and 50
+sigma_2 <- seq(0, 50, by = .5)
+y <- (1/dgamma(sigma_2, .01, .01))
+
+# normalizing sigma-squared prior
+prior2 <- y/(sum(y))
+
+# density plot of sigma-squared prior
+plot(prior2, x = sigma_2, type = "l", 
+     main = "Sigma Squared Prior DSN", xlab = expression(sigma^2), ylab = "Density")
+```
+
+```{r, fig.align = 'center', fig.width = 5, fig.height = 3.5}
+# calculating joint prior
+prior <- prior1*prior2/(sum(prior1*prior2))
+
+# plot of joint prior
+plot(prior, type = "l", main = "Joint Prior DSN")
+```
+
+```{r, fig.align = 'center', fig.width = 5, fig.height = 3.5}
+# calculating joint prior
+prior <- prior1*prior2/(sum(prior1*prior2))
+
+# setting grid approximation for likelihood
+grid <- seq(0, 100, by = 1)
+
+# calculating likelihood dsn using constraints 0 to 100 and data set mu & sd
+likelihood <- dtruncnorm(grid, a = 0, b = 100, mean = 87.27, sd = 8.8)
+
+# plot of likelihood
+plot(likelihood, type = "l", 
+     main = "Likelihood DSN", ylab = "Likelihood", xlab = "Test Score Values")
+```
+
+```{r, fig.align = 'center', fig.width = 5, fig.height = 3.5}
+# calculating unnormalized posterior dsn
+probData <- likelihood*prior
+
+# normalizing posterior
+post <- probData/sum(probData)
+
+# plot of posterior, likelihood, and prior
+plot(post, type = "l", col = 4, ylab = "Posterior Value",
+     main = "Posterior DSN of Exam Scores")
+lines(likelihood, col = 2)
+lines(prior, col = 3)
+legend(1, .04, legend = c("Posterior", "Likelihood", "Prior"), 
+       col = c(4,2,3), lty = c(1,1,1), cex = 0.5)
+```
+
+```{r}
+#setting seed
+set.seed(12413)
+
+# Monte Carlo
+posterior_draws <- sample(grid, 1000, replace = TRUE, prob = post)
+
+# estimations of mu and sd
+mean(posterior_draws)
+sd(posterior_draws)
+
+# prediction for future Math 215 student
+quantile(posterior_draws, probs = c(.025, .975))
+```
