@@ -1,0 +1,219 @@
+---
+title: '255 HW #3'
+author: "Jay Na"
+date: "4/11/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message = FALSE}
+library(SDaA)
+library(tidyverse)
+ssc <- read.csv("http://math.carleton.edu/kstclair/data/ssc.csv")
+```
+
+**Problem 1 Lohr textbook ch. 2 exercise 14.**
+
+*a)* A possible cause of selection bias is that if the online directory did not include all of the members of the Statstical Society of Canada, possibly because some members may not have had access to the Internet or were never registered online. 
+
+*b)* The estimate percentage of SSC members who are female is 30.67%. The 95% CI for my estimated percentage is (23.88%, 37.45%).
+```{r}
+fprop <- sum(ssc$sex=="f")/150 #sample proportion
+
+propse <- sqrt((1-150/864)*(fprop*(1-fprop)/(149))) #standard error of proportion
+
+q1 <- qt(.975, 149) #q
+
+lowerCI <- fprop - q1*propse #lower end of 95% CI
+upperCI <- fprop + q1*propse #upper end of 95% CI
+```
+
+*c)* The estimate total number of SSC members who are female is 265 members. The 95% CI for my estimated total is (237.80, 292.12).
+```{r}
+ftotal <- 864*fprop #estimated total female members
+
+stdev <- 150/149*fprop*(1-fprop) #estimated standard deviation
+
+totalse <- 865*sqrt(1-(150/864))*(stdev/sqrt(150)) #estimated standard error
+
+lowerCI2 <- ftotal - q1*totalse #lower end of 95% CI
+upperCI2 <- ftotal + q1*totalse #upper end of 95% CI
+```
+
+**Problem 2 Lohr textbook ch. 2 exercise 15. Data set agsrs**
+
+*a)* The estimated population mean number of acres for the counties in 1987 is 301953.7. The 95% CI is (264733, 339174.5).
+```{r, fig.width = 4, fig.height = 4}
+hist(agsrs$acres87, main = "Distribution of Number of Acres 
+     Devoted to Farms, 1987", xlab = "Number of Acres")
+
+mean87 <- mean(agsrs$acres87) #sample mean
+sd87 <- sd(agsrs$acres87) #standard deviation of sample
+
+se87 <- sqrt(1-(300/3078))*sd87/sqrt(300) #estimated standard error
+
+q2 <- qt(.975, 299) #q
+
+lowerCI87 <- mean87 - q2*se87 #lower end of 95% CI
+upperCI87 <- mean87 + q2*se87 #upper end of 95% CI
+```
+
+*b)* The estimated population mean number of farms for the counties in 1992 is estimately 599.06. The 95% CI is (555.64, 642.48).
+```{r, fig.width = 4, fig.height = 4}
+hist(agsrs$farms92, main = "Distribution of Number of Farms, 1992", xlab = "Number of Farms")
+
+mean92 <- mean(agsrs$farms92) #sample mean
+sd92 <- sd(agsrs$farms92) #standard deviation of sample
+
+se92 <- sqrt(1-(300/3078))*sd92/sqrt(300) #estimated standard error
+
+lowerCI92 <- mean92 - q2*se92 #lower end of 95% CI
+upperCI92 <- mean92 + q2*se92 #upper end of 95% CI
+```
+
+*c)* The estimate population mean number of farms with 1000 acres or more in 1992 is 56.93. The 95% CI is (48.74, 64.45).
+```{r, fig.width = 4, fig.height = 4}
+hist(agsrs$largef92, main = "Distribution of Number of Farms 
+     with 1000 acres or more, 1992", xlab = "Number of Farms")
+
+pop2c <- mean(agsrs$largef92) #estimate mean
+
+sd2c <- sd(agsrs$largef92) #standard deviation of sample
+
+se2c <- sqrt(1-(300/3078))*sd2c/sqrt(300) #estimated standard error
+
+lowerCI2c <- pop2c - q2*se2c #lower end of 95% CI
+upperCI2c <- pop2c + q2*se2c #upper end of 95% CI
+```
+
+*d)* The estimate population mean number of farms with 9 acres or fewer in 1992 is 46.82 with a 95% CI of (39.66, 53.98).
+```{r, fig.width = 4, fig.height = 4}
+hist(agsrs$smallf92, main = "Distribution of Number of Farms
+     with 9 acres or fewer, 1992", xlab = "Number of Farms")
+
+pop2d <- mean(agsrs$smallf92) #estimate mean
+
+sd2d <- sd(agsrs$smallf92) #standard deviation of sample
+
+se2d <- sqrt(1-(300/3078))*sd2d/sqrt(300) #estimated standard error
+
+lowerCI2d <- pop2d - q2*se2d #lower end of 95% CI
+upperCI2d <- pop2d + q2*se2d #upper end of 95% CI
+```
+
+**Problem 3 Lohr textbook ch. 2 exercise 16. Data set golfsrs**
+
+*a)* The data is skewed right and unimodal with its center an average price of 20.15 dollars and has a standard deviation of 17.93 dollars. There also appears to be several outliers towards the right tail of the distribution.
+```{r, fig.width = 4, fig.height = 4}
+hist(golfsrs$wkday9, main = "Distribution of Weekday Green Fees 
+     for Nine Holes of Golf", xlab = "Cost to Play (dollars)") #graphing histogram
+
+mean3a <- mean(golfsrs$wkday9) #sample mean
+sd3a <- sd(golfsrs$wkday9) #sample standard deviation
+```
+
+*b)* The average weekday greens fee to play nine holes of golf is 20.15 dollars, or `mean3a` from above. The standard error is estimately 1.63.
+```{r}
+se3a <- sqrt(1-(120/14938))*sd3a/sqrt(120) #estimated standard error
+```
+
+**Problem 4 Lohr textbook ch. 2 exercise 18.**
+
+The estimate proportion of golf course that have 18 holes is 0.708. The 95% CI for this estimate is (0.626, 0.791).
+```{r}
+prop4 <- sum(golfsrs$holes == 18)/120 #estimated proportion
+
+se4 <- sqrt((1-(120/14938))*(prop4*(1-prop4))/(119)) #estimated standard error
+
+q4 <- qt(.975, 119) #q
+
+lowerCI4 <- prop4 - q4*se4 #lower end of 95% CI
+upperCI4 <- prop4 + q4*se4 #upper end of 95% CI
+```
+
+**Problem 5 Lohr textbook ch. 2 exercise 19.**
+
+With a 95% confidence level, the sample sizes for Buckeye, Gilbert, Gila Bend, Phoenix, Tempe if we wanted to have a margin of error of 4 percentage points for each city are 535, 595, 445, 600, 535 respectively. The cities for which the finite population correction makes a difference are Buckeye (fpc=.89) and Gila Bend (fpc.74).
+```{r}
+n0 <- (1.96^2*(0.5)*(0.5))/0.04^2
+
+n_b <- n0/(1+(n0/4857)) #sample size for Buckeye
+n_g <- n0/(1+(n0/59338)) #sample size for Gilbert
+n_gb <- n0/(1+(n0/1724)) #sample size for Gila Bend
+n_p <- n0/(1+(n0/1149417)) #sample size for Phoenix
+n_t <- n0/(1+(n0/4857)) #sample size for Tempe
+```
+
+**Problem 6 Lohr textbook ch. 2 exercise 32.**
+
+Use the following code to get the population data, including log salary, and draw your SRS for part (a).
+
+*a)* I selected the SRS by randomly selected a number between 1 and the number of rows in the population data 150 times without replacement. 
+```{r, message = FALSE}
+pop <- read.csv("http://math.carleton.edu/kstclair/data/baseball.csv",
+header=FALSE, na.strings = c("NA"," ", "."))
+names(pop) <- c("team","league","player","salary","POS","G","GS",
+"InnOuts","PO","A","E","DP","PB","GB","AB","R","H",
+"SecB","ThiB","HR","RBI","SB","CS","BB","SO","IBB",
+"HPB","SH","SF","GIDP")
+pop$logsal <- log(pop$salary)
+
+n <- 150
+set.seed(12312)
+samp <- sample(1:nrow(pop), size = n, replace = FALSE)
+baseball.srs <- pop[samp,]
+str(baseball.srs)
+```
+
+*b)* The distribution of salary is not approximately normal but is are skewed right. The distribution of logsal looks slightly more normal but is still skewed right.
+```{r, fig.width = 4, fig.height = 4}
+hist(baseball.srs$salary, main = "Distribution of Salary", xlab = "Salaries (dollars)")
+hist(baseball.srs$logsal, main = "Distribution of Log of Salary", xlab = "Log of Salaries (dollars)")
+```
+
+*c)* The mean of the variable logsal is 14.13 with a 95% CI of (13.95, 14.31).
+```{r}
+pop6c <- mean(baseball.srs$logsal) #estimate mean
+sd6c <- sd(baseball.srs$logsal) #estimate sd
+se6c <- sqrt(1-(150/797))*sd6c/sqrt(150) #estimate standard error
+
+q6 <- qt(.975, 149) #q
+
+lowerCI6c <- pop6c - q6*se6c #lower 95% CI
+upperCI6c <- pop6c + q6*se6c #upper 95% CI
+```
+
+*d)* The estimate proportion of players is 0.46 with a 95% of (0.39, 0.53).
+```{r}
+prop6d <- sum(baseball.srs$POS == "P")/150 #estimate proportion
+
+se6d <- sqrt((1-(150/797))*((prop6d*(1-prop6d))/(149))) #estimate standard error
+
+lowerCI6d <- prop6d - q6*se6d #lower 95% CI
+upperCI6d <- prop6d + q6*se6d #upper 95% CI
+```
+
+*e)* The true mean for the population, 13.93, is just outside the lower end of my 95% confidence interval from part c. However, the true proportion, 0.472, does fit in my CI from part d.
+```{r}
+realmean6 <- mean(pop$logsal)
+realprop6 <- sum(pop$POS == "P")/797
+```
+
+**Problem 7 Revist the baseball pop population from Problem 6. Using the work derived by Sugden et al. (eq 2.23), compute the minumum sample size needed to “trust” the CLT approximation to the sampling distribution of the sample mean salary. Repeat the calculation for log(salary). (Your results should support the using logsal for confidence interval construction in problem 6, rather than salary, when the sample size is 150.)**
+
+The minimum sample size needed to "trust" the CLT approximation to the sampling distribution of the sample mean salary is 167, whereas the mimimum sample size for the log(salary) is 36.
+```{r}
+skew_salary <- mean((pop$salary - mean(pop$salary))^3)/sd(pop$salary)^3
+n_min_s <- 28 + 25*skew_salary^2
+n_min_s
+
+skew_logsal <- mean((pop$logsal - mean(pop$logsal))^3)/sd(pop$logsal)^3
+n_min_l <- 28 + 25*skew_logsal^2
+n_min_l
+```
+
+**Problem 8**
+(on separate sheet of paper)
