@@ -1,0 +1,159 @@
+---
+title: "Math 275 HW8"
+author: "Jay Na"
+date: "5/14/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**Problem 2**
+```{r}
+data(Bangladesh, package = "resampledata")
+chlorine <- with(Bangladesh, Chlorine[!is.na(Chlorine)])
+```
+
+**a)** The distribution is unimodal with a center at roughly 78 ppb. It also is strongly skewed to the right with what appears are several outliers on the far right end tail of the distribution. 
+```{r}
+hist(chlorine, main = "Chlorine Level Distribution", xlab = "Chlorine Level (parts per billion (ppb))")
+```
+
+**b)** The 95% t-CI for the mean of chlroine levels is (52.873, 103.295).
+```{r}
+ybar <- mean(chlorine)
+n <- 269
+s <- sd(chlorine)
+
+#95% CI
+ybar + c(-1,1)*qt(0.975, n-1)*s/sqrt(n)
+```
+
+**c)** The 95% bootstrap percentile is (54.899, 103.935).The bootstrap-t CI for the mean alkalinity level is (56.955, 111.684). The interval of the bootstrap-t is slightly wider than the bootstrap percentile but are relatively similar. However, the boostrap-t yields higher values for both bounds. And so, I would report the bootstrap-t because it takes to account the numbers that are skewed right in the distribution. 
+```{r}
+#bootstrap percentile
+B <- 1e4
+boot_t <- numeric(B)
+bootMean <- numeric(B)
+bootSD <- numeric(B)
+
+set.seed(3456345)
+bootMeans <- numeric(B)
+for(b in 1:B){
+  bootSample <- sample(chlorine, replace = TRUE)
+  bootMeans[b] <- mean(bootSample)
+}
+
+quantile(bootMeans, c(0.025,0.975))
+```
+
+```{r}
+#bootstrap-t
+set.seed(12452)
+for(b in 1:B){
+  bootSamp <- sample(chlorine, replace=TRUE)
+  bootMean <- mean(bootSamp)
+  bootSD <- sd(bootSamp)
+  boot_t[b] <- (bootMean - ybar)/(bootSD/sqrt(n))
+}
+
+ybar - quantile(boot_t,c(0.975, 0.025)) * s/sqrt(n)
+```
+
+**da)** The distribution is unimodal with a center at roughly 3 ppb. It also is slightly skewed to the right with no apparent outliers.
+```{r}
+hist(log(chlorine), main = "Log Chlorine Level Distribution", xlab = "Log Chlorine Level (parts per billion (ppb))")
+```
+
+**db)** The 95% t-CI for the mean of chlorine levels is (2.681, 3.061).
+```{r}
+(ybar2 <- mean(log(chlorine)))
+n <- 269
+s2 <- sd(log(chlorine))
+
+#95% CI
+ybar2 + c(-1,1)*qt(0.975, n-1)*s2/sqrt(n)
+```
+
+**dc)** The 95% bootstrap percentile is (2.684, 3.059).The bootstrap-t CI for the mean alkalinity level is (2.685, 3.062). The interval of the bootstrap-t is slightly wider than the bootstrap percentile but are relatively similar. However, the boostrap-t yields again higher values for both bounds. And so, I would report the bootstrap-t because it takes to account the numbers that are skewed right in the distribution. 
+```{r}
+#bootstrap percentile
+B <- 1e4
+boot_t <- numeric(B)
+
+set.seed(3456345)
+bootMeans2 <- numeric(B)
+for(b in 1:B){
+  bootSample <- sample(log(chlorine), replace = TRUE)
+  bootMeans2[b] <- mean(bootSample)
+}
+
+quantile(bootMeans2, c(0.025,0.975))
+```
+
+```{r}
+#bootstrap-t
+set.seed(12452)
+for(b in 1:B){
+  bootSamp <- sample(log(chlorine), replace=TRUE)
+  bootMean <- mean(bootSamp)
+  bootSD <- sd(bootSamp)
+  boot_t[b] <- (bootMean - ybar2)/(bootSD/sqrt(n))
+}
+
+ybar2 - quantile(boot_t,c(0.975, 0.025)) * s2/sqrt(n)
+```
+
+**e)** The CI for the geometric mean arsenic concentration is (14.658, 21.373).
+```{r}
+exp(1)^(ybar2 - quantile(boot_t,c(0.975, 0.025)) * s2/sqrt(n))
+```
+
+**f)** I think the geometric mean gives a more informative summary because the log distribution was approximately more normal than the sample distribution, which is most likely what it would look like if more samples were taken that better represent the entire population.
+
+**Problem 3**
+```{r}
+data(MobileAds, package = "resampledata")
+```
+
+**a)** Both distributions are strongly right skewed and are heavily right tailed. Most of the data for both distribution are of lesser values. 
+```{r}
+qqnorm(MobileAds$m.cost_pre)
+qqnorm(MobileAds$m.cost_post)
+```
+
+**b)** A two-sample interval is not appropriate because the two variables are paired data and are dependent on the treatment given, which in this case is Google's recommendation.
+
+**c)** The distribution appears relatively skewed left with a heavy left tail. It appears most of its data is centered at 0, however there is a light tail on the right.
+```{r}
+diff <- (MobileAds$m.cost_pre)-(MobileAds$m.cost_post)
+qqnorm(diff)
+```
+
+**d)** The 95% t CI for the true mean change is (-12.775, 40.318). I am 95% confident that the mean amount that advertisers paid is between 12.78 dollars lower than and 27.34 dollars higher than the mean amount after Google's recommendation.
+```{r}
+#95% CI
+t.test(MobileAds$m.cost_pre, MobileAds$m.cost_post)$conf
+```
+
+**e)** The 95% bootstrap-t CI for the true mean change is (-84.707, -26.367). This means that I am 95% confident that the mean amount that advertisers paid is between 26.37 and 84.71 dollars lower than the mean amount after Google's recommendation. This differs much from the formula t interval because the difference distribution has uneven and heavy tails, and so calculating the percentiles as if the distribution was symmetrical would give a less accurate interval than if we bootstrapped the t.
+
+```{r, warning = FALSE}
+#bootstrap-t
+ybar3 <- mean(MobileAds$m.cost_pre)-mean(MobileAds$m.cost_post)
+nx <- length(MobileAds$m.cost_pre)
+ny <- length(MobileAds$m.cost_post)
+se <- sqrt(var(MobileAds$m.cost_pre)/nx+var(MobileAds$m.cost_post)/ny)
+
+B <- 10000
+Tstar <- numeric(B)
+set.seed(12452)
+for(b in 1:B){
+  bootx <- sample(MobileAds$m.cost_pre, nx, replace=TRUE)
+  booty <- sample(MobileAds$m.cost_post, ny, replace=TRUE)
+  Tstar[b] <- (mean(bootx)-mean(booty) - diff)/sqrt(var(bootx)/nx+var(booty)/ny)
+}
+
+ybar3 - quantile(Tstar,c(0.975, 0.025)) * se
+```
