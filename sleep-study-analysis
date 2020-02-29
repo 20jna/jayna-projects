@@ -1,0 +1,50 @@
+---
+title: "Sleep & Dreaming Project Appendix"
+author: "Jay Na"
+date: "5/27/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, message = FALSE}
+library(tidyverse)
+```
+
+```{r}
+#creating vectors for nap data
+nap_length <- c(10, 15, 20, 25, 30, 35, 40, 45)
+hrs_slept2 <- c(7.0, 7.2, 7.5, 7.1, 7.0, 6.8, 7.3, 7.0)
+hrs_slept1 <- c(7.2, 7.5, 7.1, 7.0, 6.8, 7.3, 7.0, 7.3)
+SSS_before <- c(3, 3, 2, 3, 4, 3, 2, 3)
+SSS_1hr <- c(3, 2, 3, 3, 1, 2, 3, 3)
+SSS_3hr <- c(3, 3, 4, 4, 2, 3, 3, 4)
+SSS_5hr <- c(4, 5, 4, 4, 3, 4, 4, 5)
+
+#data set for nap data
+nap.data <- data.frame(nap_length, hrs_slept2, hrs_slept1, SSS_before, SSS_1hr, SSS_3hr, SSS_5hr)
+
+nap.data
+```
+
+```{r, warning = FALSE}
+#creating plot
+plot(nap_length, SSS_before, data = nap.data, lwd=0, ylim = c(0, 6), 
+     xlab = "Length of Nap (minutes)", ylab = "SSS Rating", 
+     main = "Standford Sleepiness Scale (SSS) Ratings for Naps")
+lines(nap_length, SSS_before, col=2, lwd=1, lty=1)
+lines(nap_length, SSS_1hr, col=3, lwd=1, lty=2)
+lines(nap_length, SSS_3hr, col=4, lwd=1, lty=3)
+lines(nap_length, SSS_5hr, col=8, lwd=1, lty=4)
+
+#creating legend
+legend('top',legend=c("SSS Rating Before",
+                      "SSS Rating 1 Hour After",
+                      "SSS Rating 3 Hours After", 
+                      "SSS Rating 5 Hours After"), 
+       col=c(2,3,4,8),lty=c(1,2,3,4), cex=0.4, ncol=1,text.width=5)
+```
+
+
