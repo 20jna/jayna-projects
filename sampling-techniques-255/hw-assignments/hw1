@@ -1,0 +1,184 @@
+---
+title: "Math 255 - Homework 1"
+author: "Jay Na"
+date: "Due in class, Friday April 5"
+output: pdf_document
+---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, prompt=TRUE, comment=NULL,tidy.opts=list(width.cutoff=60),tidy=TRUE,eval=TRUE)
+```
+
+
+### Problem 1
+Lohr textbook ch. 1 exercise 6 (see prompt on page 19)
+
+The target population is all the readers of the Prevention. The sampling frame is the readers of the Prevention that saw the survey in that specific magazine. The sampling unit and observation unit is the women who had returned the survey. One possible source of inaccuracy is that the choices are arbitrary in that there is no telling what a person might think makes the difference between very good and good. One selection bias is that the women who read the survey and are relatively healthy would more likely feel comfortable and confident sending back the survey with an excellent, very good, or good than the women who don't feel as healthy but still read the article.
+
+### Problem 2
+Lohr textbook ch. 1 exercise 7
+
+The target population is the cows in the region. The sampling frame is all the farms available for the region that are included on the list. The sampling unit are the farms the cows live in. The observation unit is the cows of the 50 selected farms. One selection bias that may occur is that the 50 farms that are picked are all feed their cows significantly more than the other farms. However, the farms are picked randomly so that risk is minimized. An inaccuracy of responses is if the weights were wrongly measured.
+
+### Problem 3
+Lohr textbook ch. 1 exercise 13
+
+The target population is the people who have attended the 2005 Join Statistical Meetings. The sample frame is the sample of persons that the American Statistical Association sent the e-mail to. The sampling unit and observational unit is the people from the Meetings that responded to the survey by mid-September 2005. Selection bias is that some of the people that attended the Meetings were not included in the survey. The inaccuracy bias is that people might not actually tell the truth on how they actually felt about the Meetings.
+
+### Problem 4
+Lohr textbook ch. 1 exercise 22
+
+The phrase "that's probably just as well" suggests that a women not being president of the U.S. for a long time was a good thing, even though it was not planned. The statement was a loaded statement because it suggests an opinion about how they felt about women not being president, which can affect and sway the responses of the people taking the poll.
+
+### Problem 5
+Consider the 1936 election polls that were described in the [Big Data reading](https://www.ft.com/content/21a6e7d8-b479-11e3-a09a-00144feabdc0#axzz3lX7tqY8a) (Financial Times article). 
+
+(a) Describe the **target population** for both the Gallup and Literary Digest polls, then describe the **sampled population** for the Literary Digest poll. 
+
+The target population for the Gallup and Literary Digest polls are the voters of the 1936 presidential election. The sampled population for the Literary Digest is the first 10 million people that that returned the postal opinion poll. 
+
+(b) For the Literary Digest poll, describe one source of undercoverage bias and one source of non-response bias. 
+
+One source of undercoverage bias was that the poll was only mailed out to people on a list complied from automobile registrations and telephone directories, which at the the time was "disproportionately prosperous". In this case, voters who had not owned a car or telephone and people who were not on the lists were excluded from the study and not accounted for. One source of non-response is that only 24% of the people that were mailed responded to the poll. People who are less swayed to one side or another or do not want to waste time mailing the poll back but still vote would feel less confident or inclined to send their votings.
+
+### Problem 6 
+Probelm 6 has most, but not all, R commands provided in the Homework1.Rmd file linked to on the class moodle page. Upload this .Rmd file to your Math 255 folder on the Mirage server (create this folder in Mirage). Then open the .Rmd in RStudio and compile it into a pdf document using the Knit PDF button. See the R/Rstudio resource link at the top of the course Moodle page for more info on R Markdown and come see me if you've never use R Markdown before. 
+
+Work through this assignment and answer all questions in the R Markdown (.Rmd) file. Compile your completed assignment into a pdf (or html, either is fine). You can answer Problems 1-5 in this .Rmd file too, or write these up by hand. 
+
+#### Idea
+In class we compared sampling designs for a very simple problem (sampling 2 elements from a population of 3 elements) using (probability) theory to study properties of the two sampling design . Another method of comparing sampling designs is to use a computer simulation. You will use a simulation study to compare two  methods of random sampling from a finite population: sampling with replacement vs. sampling without replacement (commonly known as a Simple Random Sample - SRS). You will make comparisons of the behavior of the sample mean under these two different sampling designs. In particular, you will look at the *bias* and *standard error* of the sample mean estimator.
+
+
+#### The population
+
+The file StatsClassSurvey.csv is a comma separated values file that contains responses from a large group of statistics students. This will be your population. Read the data into R and explore the contents of this file.
+
+```{r, eval=FALSE}
+pop <- read.csv("http://math.carleton.edu/kstclair/data/StatsClassSurvey.csv")
+names(pop)
+head(pop)
+```
+
+Note that `pop` is an **R object** called a **data frame**. Click on the file name in the Data section of your Rstudio **Environment** pane to see the data.
+
+#### (a) Questions: How many variables are in this file? Which are categorical and which are quantitative?
+
+There are 5 variables in this file in which sex, height, class, and driving are categorical and height and excercise are quantitative. 
+
+####  The population parameter
+We will look at the height variable (measured in inches) and investigate how to estimate the average height in the population.
+```{r, eval=FALSE}
+pop$Height             # all heights in the population
+N <- length(pop$Height)
+N                   # population size
+pop.mean <- mean(pop$Height)
+pop.mean            # population mean for Height
+summary(pop$Height)  # other population parameters for Height
+```
+
+####  (b) Question: What is the population size and population mean height?
+
+The population size is 128 students and the population mean height is estimately 67.91. 
+
+####  The simulation
+We will next use an R simulation to compare how the sample mean behaves (i.e. the sample mean's sampling distribution) under two different sampling designs: random sampling **with** replacement vs. random sampling **without** replacement (aka Simple Random Sample). The basic idea behind this simulation is:
+
+1. pick sample size $n$
+2.  draw a random sample of size $n$ (either with or without replacement) from the population
+3.  compute the sample mean
+4.  repeat steps 2-3 a large number of times ("`reps`") and  compare how the sample mean behaves under the different sampling designs
+
+Below are these basic steps translated into R.  Keep the number of `reps` set at 1 (for now) to answer the questions below (c).
+```{r, eval=FALSE}
+n <- 10          # sample size
+reps <- 1        # number of repetitions
+est.repl <-rep(NA,reps)      # vector for with replacement
+est.norepl <- rep(NA,reps)   # vector for without replacement
+
+set.seed(77)
+for (i in 1:reps)
+{
+# with replacement:
+samp.repl <- sample(1:N,n,replace=T)     # units sampled
+data1 <- pop$Height[samp.repl]           # height of units sampled
+est.repl[i] <- mean(data1)               # sample mean
+# without replacement:
+samp.norepl <- sample(1:N,n,replace=F)   # units sampled
+data2 <- pop$Height[samp.norepl]         # height of units sampled
+est.norepl[i] <- mean(data2)             # sample mean
+}
+```
+Comment:  The `set.seed()` command will make your random simulation results reproducible - i.e. the same random samples will be produced when using the same seed. If it wasn't set prior to using the `sample` command you would get different results each time you run the simulation (or knit this document). Changing the seed value, or deleting the command, will produce a different random sample. Feel free to change the seed to some other integer value but keep the `set.seed` command to ensure your written answers below match the results shown in the R code. 
+
+####  (c) Questions: Your population was enumerated 1 to N. What are the numbers and heights of the units that you sampled for your with replacement sample? What is the average height in this sample? Repeat these two questions using your without replacement sample. Are your two sample means the same? Why or why not?
+
+The numbers of the units that were sampled with replacement are 38, 92, 111, 122, 95, 59, 109, 109, 73, 59 and their heights are 65, 70, 63, 62, 71, 64, 68, 68, 75, 64 respectively. The average height in this sample is 67.The numbers of the units that were sampled without replacement are 112, 126, 21, 1, 56, 45, 69, 86, 128, 2 and their heights are 64, 68, 72, 63, 65, 60, 64, 66, 70.5, 65 respectively. The average height in this sample is 65.75. The sample mean with replacement is slightly higher than the sample mean without replacement but are relatively close because the population size is large enough in comparison to its sample size where sampling 10 students with or without replacement would not have much effect on their sample means. 
+
+```{r, eval=FALSE}
+samp.repl     # numbers of units w/ replacement
+data1         # weights of units w/ replacement
+est.repl      # average height w/ replacement
+
+samp.norepl   # numbers of units w/o replacement
+data2         # weights of units w/o replacement
+est.norepl    # average height w/o replacement
+
+```
+
+Next we need to generate lots of samples (using each design) to explore the distribution of the sample mean. We will run the simulation above again but change the values of `reps` to 50000:
+```{r, eval = FALSE}
+n<- 10          # sample size
+reps<- 50000        # number of repetitions
+est.repl<-rep(NA,reps)      # vector for with replacement
+est.norepl<- rep(NA,reps)   # vector for without replacement
+
+set.seed(77)
+for (i in 1:reps)
+{
+# with replacement:
+samp.repl<- sample(1:N,n,replace=T)     # units sampled
+data1<- pop$Height[samp.repl]           # height of units sampled
+est.repl[i]<- mean(data1)               # sample mean
+# without replacement:
+samp.norepl<- sample(1:N,n,replace=F)   # units sampled
+data2<- pop$Height[samp.norepl]         # height of units sampled
+est.norepl[i]<- mean(data2)             # sample mean
+}
+```
+
+Then run the commands below to compare the sampling distributions of the sample mean under the two sampling designs.
+```{r, eval = FALSE}
+# compare sampling distributions of the sample mean for each type of design
+boxplot(est.repl, est.norepl, names=c("With Repl", "Without Repl"))
+abline(h=pop.mean, col="red")
+summary(est.repl)
+summary(est.norepl)
+
+# Bias: average estimate value - pop.mean
+mean(est.repl) - pop.mean     # with replacement bias
+mean(est.norepl) - pop.mean   # without replacement bias
+
+# SE: standard deviation of estimates
+sd(est.repl)     # with replacement: SE of sample mean
+sd(est.norepl)   # without replacement: SE of sample mean
+
+hist(est.repl)    # histogram with replacement
+hist(est.norepl)  # historgram without replacement
+```
+
+#### (d) Questions: Are the sampling distributions skewed or symmetric? Are they roughly normal? (you can check histograms too for modes) Do both designs yield (roughly) unbiased estimates of the population mean? What are the SEs of the sample mean for each design? Which design offers you more precision when estimating the population mean?
+
+Both sampling distributions are roughly symmetric and roughly normal. With bias values of 0.007 and 0.003, both designs yield roughly unbiased estimate of the population mean. The SEs of the sample with replacement and without replacement are estimately 1.28 and 1.24 respectively. With a lower bias and SE value, the design with no replacement offers more precision when estimating the population mean.
+
+#### The Finite Population Correction (FPC)
+
+The multiplicative factor that makes the without replacement SE smaller than the with replacement SE is the square root of the **finite population correction  (FPC)**. The ratio of variances (*squared* SEs) from the simulation approximates the FPC, but the exact formula for the FPC is $1-n/N$.
+```{r, eval = FALSE}
+
+(sd(est.norepl)/sd(est.repl))^2     # without SE < with SE
+1-n/N                     # why? the Finite Pop. Correction (FPC)
+```
+#### (e) Questions: How much (by what factor) is the SE of the sample mean reduced by using the without replacement random sample for $n=10$  when compared to a with replacement random sample? Will this factor increase or decrease if we change the sample size to $n=50$? Give an intuitive (not formulaic!) explanation for  why there is less variability in the sample mean when you use a without replacement sampling design compared to  a with replacement design.
+
+The SE of the sample mean is reduced by a factor of 0.92 by using the without replacement random sample for $n=10$ when compared to a sample mean with replacement. This factor would decrease if we changed the sample size to $n=50$. There is less variablilty in the sample mean when you use a without replacement sampling design compared to when using a design with replacement because when sampling the data, there is less a chance of selecting units that highly influence the results. For example, if there was a height that was much larger than the other numbers, a sampling design without replacement would only select that variable once rather than a desgin that has replacement, which could pick that height multiple times, skewing the estimated mean for the population.
