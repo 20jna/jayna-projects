@@ -1,0 +1,93 @@
+---
+title: "Class Assignment #1"
+author: "Jay Na"
+date: "4/10/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(survey)
+library(SDaA)
+str(agsrs)
+summary(agsrs$acres92)
+sd(agsrs$acres92)
+hist(agsrs$acres92/1000000, main = "Millions of acres per county", xlab = "")
+```
+
+```{r}
+agsrs$lt200k92 <- ifelse(agsrs$acres92 < 200000, 1, 0)
+agsrs$lt200k92[1:20]
+agsrs$acres92[1:20]
+mean(agsrs$lt200k92)
+```
+
+```{r}
+agsrs$N <- 3078
+agsrs$wts <- agsrs$N/nrow(agsrs)
+str(agsrs)
+```
+
+```{r}
+design.srs <- svydesign(id = ~1, fpc = ~N, weights = ~wts, data = agsrs)
+```
+
+```{r}
+tot.obj <- svytotal(~acres92, design.srs)
+tot.obj
+```
+
+```{r}
+cv(tot.obj)
+confint(tot.obj)
+confint(tot.obj, df = degf(design.srs))
+degf(design.srs)
+```
+
+```{r}
+mean.obj <- svymean(~acres92+lt200k92, design.srs)
+mean.obj
+cv(mean.obj)
+confint(mean.obj)
+confint(mean.obj, df = degf(design.srs))
+```
+
+```{r}
+t.test(agsrs$acres92)
+```
+
+```{r}
+agsrs$lt200k92 <- ifelse(agsrs$acres92 >200000, "less than 200k","greater than 200k")
+str(agsrs$lt200k92)
+table(agsrs$lt200k92)
+```
+
+```{r}
+design.srs <- svydesign(id = ~1, fpc = ~N, weights = ~wts, data - agsrs)
+svymean(~lt200k92, design.srs)
+```
+
+```{r}
+design2.srs <- svydesign(id = ~1, weights = ~wts, data = agsrs)
+summary(design2.srs)
+design3.srs <- svydesign(id = ~1, data = agsrs)
+summary(design3)
+```
+
+```{r}
+svytotal(~acres92, design.srs)
+svytotal(~acres92, design2.srs)
+svytotal(~acres92, design3.srs)
+```
+
+```{r}
+svymean(~acres92, design.srs)
+svymean(~acres92, design2.srs)
+svymean(~acres92, design3.srs)
+sd(agsrs$acres92)/sqrt(300)
+```
+
+
