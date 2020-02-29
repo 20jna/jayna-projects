@@ -1,0 +1,155 @@
+---
+title: 'Homework #8'
+author: "Jay Na"
+date: "10/24/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+4b.) First, we would set initial values for the parameters, $\sigma^2$ of 1 to n, and b. We would then create a matrix of NA values for the MCMC draws with S rows and n+1 columns. Then we would draw n number of $\sigma^2$ from it's respective conditional posterior distribution. Then we would do the same for b using it's respected conditional posterior distribution. Then we would repeat these last two steps S amount of times, placing them in the matrix each time. 
+
+4c.)
+```{r, message = FALSE}
+library(MCMCpack)
+```
+
+```{r, fig.width = 9, fig.height = 5}
+set.seed(2134)
+
+y <- c(1,2,3,4,5,6,7,8,9,10)
+n <- 10
+a <- 10
+b <- 1
+sigma2_1 <- 1
+sigma2_2 <- 1
+sigma2_3 <- 1
+sigma2 <- c(sigma2_1, sigma2_2, sigma2_3)
+# matrix
+S <- 10000
+mcmc.draws <- matrix(NA, nrow = S, ncol = 4)
+colnames(mcmc.draws) <- c("sigma2_1","sigma2_2","sigma2_3", "b")
+
+for(i in 1:S){
+  #samples for sigma^2
+alpha1 <- a + 1/2
+beta1 <- (1/2)*y[1]^2 + b
+sigma2_1 <- rinvgamma(1,alpha1, beta1)
+
+alpha2 <- a + 1/2
+beta2 <- (1/2)*y[2]^2 + b
+sigma2_2 <- rinvgamma(1,alpha2, beta2)
+
+alpha3 <- a + 1/2
+beta3 <- (1/2)*y[3]^2 + b
+sigma2_3 <- rinvgamma(1,alpha3, beta3)
+
+
+  # sample for b
+alpha_b <- n*a + 1
+beta_b <- sum((1/sigma2)) + 1
+b <- rgamma(1, alpha_b, beta_b)
+  
+# draws
+mcmc.draws[i,] <- c(sigma2_1,sigma2_2,sigma2_3, b)
+}
+
+par(mfrow = c(2,2))
+hist(mcmc.draws[,1], xlab = expression(sigma^2), ylab = "Frequency",
+        main = "Marginal Post for Sigma1^2
+        [a=10]")
+hist(mcmc.draws[,2], xlab = expression(sigma^2), ylab = "Frequency",
+        main = "Marginal Post for Sigma2^2
+        [a=10]")
+hist(mcmc.draws[,3], xlab = expression(sigma^2), ylab = "Frequency",
+        main = "Marginal Post for Sigma3^2
+        [a=10]")
+hist(mcmc.draws[,4], xlab = "b", ylab = "Frequency",
+        main = "Marginal Post for b
+        [a=10]")
+```
+
+As you can see from the marginal distributions for sigma1^2, sigma2^2, sigma3^2 have are all similar since the only variable changing is Y. And so, sigma_n^2 will be relatively similar to these three graphs.
+
+4d.)
+with a = 1:
+```{r, fig.width = 9, fig.height = 5}
+y <- c(1,2,3,4,5,6,7,8,9,10)
+n <- 10
+a <- 1
+b <- 1
+sigma2_1 <- 1
+sigma2_2 <- 1
+sigma2_3 <- 1
+
+# matrix
+S <- 10000
+mcmc.draws2 <- matrix(NA, nrow = S, ncol = 4)
+colnames(mcmc.draws) <- c("sigma2_1","sigma2_2","sigma2_3", "b")
+
+for(i in 1:S){
+  #samples for sigma^2
+alpha1 <- a + 1/2
+beta1 <- (1/2)*y[1]^2 + b
+sigma2_1 <- rinvgamma(1,alpha1, beta1)
+
+alpha2 <- a + 1/2
+beta2 <- (1/2)*y[2]^2 + b
+sigma2_2 <- rinvgamma(1,alpha2, beta2)
+
+alpha3 <- a + 1/2
+beta3 <- (1/2)*y[3]^2 + b
+sigma2_3 <- rinvgamma(1,alpha3, beta3)
+
+
+  # sample for b
+alpha_b <- n*a + 1
+beta_b <- sum((1/sigma2)) + 1
+b <- rgamma(1, alpha_b, beta_b)
+  
+# draws
+mcmc.draws2[i,] <- c(sigma2_1,sigma2_2,sigma2_3, b)
+}
+
+par(mfrow = c(2,2))
+hist(mcmc.draws2[,1], xlab = expression(sigma^2), ylab = "Frequency",
+        main = "Marginal Post for Sigma1^2
+        [a=1]")
+hist(mcmc.draws2[,2], xlab = expression(sigma^2), ylab = "Frequency",
+        main = "Marginal Post for Sigma2^2
+        [a=1]")
+hist(mcmc.draws2[,3], xlab = expression(sigma^2), ylab = "Frequency",
+        main = "Marginal Post for Sigma3^2
+        [a=1]")
+hist(mcmc.draws2[,4], xlab = "b", ylab = "Frequency",
+        main = "Marginal Post for b
+        [a=1]")
+```
+
+
+```{r, fig.width = 9, fig.height = 3.5}
+par(mfrow = c(2,3))
+plot(x=1:S, y = mcmc.draws[,1], xlab = "Iterations", ylab = "MCMC sample", 
+     type = "l", main = "Traceplot for Sigma1^2 [a=10]")
+plot(x=1:S, y = mcmc.draws[,2], xlab = "Iterations", ylab = "MCMC sample", 
+     type = "l", main = "Traceplot for Sigma2^2 [a=10]")
+plot(x=1:S, y = mcmc.draws[,3], xlab = "Iterations", ylab = "MCMC sample", 
+     type = "l", main = "Traceplot for Sigma3^2 [a=10]")
+
+plot(x=1:S, y = mcmc.draws2[,1], xlab = "Iterations", ylab = "MCMC sample", 
+     type = "l", main = "Traceplot for Sigma1^2 [a=1]")
+plot(x=1:S, y = mcmc.draws2[,2], xlab = "Iterations", ylab = "MCMC sample", 
+     type = "l", main = "Traceplot for Sigma2^2 [a=1]")
+plot(x=1:S, y = mcmc.draws2[,3], xlab = "Iterations", ylab = "MCMC sample", 
+     type = "l", main = "Traceplot for Sigma3^2 [a=1]")
+
+plot(x=1:S, y = mcmc.draws[,4], xlab = "Iterations", ylab = "MCMC sample", 
+     type = "l", main = "Traceplot for b [a=10]")
+plot(x=1:S, y = mcmc.draws2[,4], xlab = "Iterations", ylab = "MCMC sample", 
+     type = "l", main = "Traceplot for b [a=1]")
+
+```
+
+The MCMC converges at around the same amount of iterations, however, when a = 1, or is small, the MCMC samples are more spread and variate.
