@@ -1,0 +1,146 @@
+---
+title: "Math 255 - Homework 7"
+author: "Jay Na"
+date: "Due in class, Friday, May 10"
+output: pdf_document
+---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, prompt=TRUE, comment=NULL,tidy.opts=list(width.cutoff=60),tidy=TRUE,eval=TRUE)
+```
+
+```{r, message=FALSE}
+library(survey)
+library(SDaA)
+library(tidyverse)
+```
+
+**The finalized version.**
+
+Use Rstudio to answer these questions and write your homework up using R Markdown. **If data is provided, use the R `survey` package to obtain any estimates asked for in a problem. Knit to Word or PDF prior to printing.**  Textbook data sets are in the R package `SDaA` unless you are told otherwise. 
+
+
+### Problem 1 *Lohr textbook ch. 5 exercise 1.*
+
+This sampling technique fails to take to account many of the errors in their design to argue that the estimate proportion is a valid estimate. To start, if they wanted to guess the proportion for all eligible voters in the small city, they must take account for the eligible voters that do not have telephones and/or the voters that do not yet reside in the city. Also, the estimate does not account for the survey noncoverage error for the people who were surveyed but refused to answer. For these reasons, these estimates are not valid as a population estimate.
+
+### Problem 2 *Lohr textbook ch. 5 exercise 3.*
+
+**a)** The psus are the wetlands, which are the clusters in the cluster sample. The ssus are the sites that were randomly selected, which are the elements in the clusters. To estimate the average pH in the suburban wetlands given this design, I would use the average pH of all randomly selected sites from the two wetlands that drain suburban watersheds.
+
+**b)** This analysis is not appropriate because the sites should not be treated as independently since the sites will depend on which wetlands that are in. In other words, the pH of one site will depend on the pH of another site when they are from the same wetland area.
+
+### Problem 3 *Lohr textbook ch. 5 exercise 4.*  
+See http://math.carleton.edu/kstclair/data/SDaADescriptions/journal.pdf for variable descriptions.
+
+**a)** This is a cluster sample because the articles, which are the ssus, are the elements in the clusters and the journals are the psus or clusters of the sample, which are randomly selected.
+
+**b)** The estimate proportion is 0.886. The SE of my estimate is 0.044.
+```{r}
+journal$N <- 1285
+journal$n <- 26
+journal$wts <- journal$N/journal$n
+journal$prop <- journal$nonprob/journal$numemp
+
+design.journal <- svydesign(id= ~1, fpc= ~N, weights= ~wts, data=journal)
+
+svymean(~prop, design.journal, na.rm=T)
+```
+
+**c)** Although there is a substantial proportion of proportion of articles in the journals that use nonprobability sampling, it is a strong assumption that these articles were by recognized scholarly and practicionar experts and that they necenssarily rely on those designs. The data collected only tells us if they used nonprobability sampling, not if the authors' design soley relied on nonprobability. Also, the statement also assumes that designs that are nonprobability should be valid, which is not necessarily true in all cases.
+
+### Problem 4
+Lohr textbook ch. 5 exercise 5. Data set is missing from `SDaA` so use the file:
+```{r}
+spanish <- read.csv("http://math.carleton.edu/kstclair/data/spanish.csv")
+
+spanish$n <- 72
+spanish$N <- (196/10)*spanish$n
+
+spanish$wts <- spanish$N/spanish$n
+
+design.spanish <- svydesign(id= ~class, fpc= ~N, weight= ~wts, data=spanish)
+```
+
+**a)** The estimate total number of students planning a trip to a Spanish-speaking country in the next year is 1235 students. The 95% CI is (495 students, 1975 students).
+```{r}
+svytotal(~trip, design.spanish)
+confint(svytotal(~trip, design.spanish), df = degf(design.spanish))
+```
+
+**b)** The estimate mean vocabulary test score for Introductory Spanish students in the language school is 66.796. The 95% CI is (60.215, 73.377).
+```{r}
+svymean(~score, design.spanish)
+confint(svymean(~score, design.spanish), df = degf(design.spanish))
+```
+
+### Problem 5
+Consider the baseball data again. 
+```{r}
+pop <- read.csv("http://math.carleton.edu/kstclair/data/baseball.csv", 
+    header=FALSE, na.strings = c("NA"," ", "."))
+names(pop) <- c("team","league","player","salary","POS","G","GS",
+                "InnOuts","PO","A","E","DP","PB","GB","AB","R","H",
+                "SecB","ThiB","HR","RBI","SB","CS","BB","SO","IBB",
+                "HPB","SH","SF","GIDP")
+pop$logsal <- log(pop$salary)
+```
+
+**(a) Consider taking a one-stage cluster sample of players using teams as clusters. Make a side-by-side boxplot of `logsal` by `team` and comment on whether you think a cluster sample (by team) that results in 150 players will be less precise than a SRS of 150 players.**
+
+With substantial variability within boxplots for each team, we can infer that clustering by team would more precise than a SRS of 150 players.
+```{r}
+boxplot(logsal~team, data = pop)
+```
+
+**(b) What are the smallest and largest cluster sizes in the population? Do you think we can use one-stage results for this population that assume that cluster sizes are equal?**
+
+The smallest cluster size is 24 players whereas the largest is 29 players. With an IQR of 1 player, it is safe to assume that for this population, the cluster sizes are eual when using a one-stage cluster sample.
+```{r}
+pop %>% group_by(team) %>% count() %>% ungroup() %>% summary()
+```
+
+**(c) If we assume that cluster sizes are the same, then the design effect for estimating the mean `logsal` per player for a cluster sample that results in "m" elements compared to a SRS of "m" elements will be $$DEff = \dfrac{MSB}{S^2}$$ where $MSB$ and $S^2$ are computed using the response `logsal`. Using this formula for DEff, compute the design effect that assumes that clusters are of equal size. Comment on what this value tells you about the precision of a cluster sample compared to a SRS for this population.**
+
+The design effect is 3.038, which tells us that the SRS design three times more precise than the cluster sample.
+```{r}
+summary(aov(logsal~as.factor(team), data=pop))
+
+msb <- 4.661
+ssb <- 135.2
+ssw <- 1086.2
+sst <- ssb+ssw
+s.squared.hat <- sst/(796)
+
+(deff <- msb/s.squared.hat)
+```
+
+**(d) Use the following code, along with your assessment of cluster sizes, to generate a one-stage cluster sample that results in around 150 players sampled. Explain how you chose your cluster sample size `n` and how many players you ended up sampling.**
+
+I chose 6 as n because with estimately 26 players per team, there would be a total of 6*26= 156 players sampled since all players in each of the 6 teams are a part of the sample. This is closest we can get to 150 given the design. 
+```{r}
+n <- 6  # fill in cluster sample size
+set.seed(49565)  # put your favorite large integer here
+team.names <- levels(pop$team)
+samp.teams <- sample(team.names, size = n, replace = FALSE)
+baseball.1cluster <- filter(pop, team %in% samp.teams) %>% droplevels()
+```
+
+**(e) Use your sample from (d) to estimate the mean `logsal` and give a SE.**
+
+The estimate mean logsal is 13.759 with a SE of 0.083.
+```{r}
+baseball.1cluster$N <- 797
+baseball.1cluster$n <- 157
+baseball.1cluster$wts <- baseball.1cluster$N/baseball.1cluster$n
+
+design.baseball <-svydesign(id= ~1, fpc = ~N, weight= ~wts, data=baseball.1cluster)
+svymean(~logsal, design.baseball)
+```
+
+**(f) Add `deff=TRUE` to your survey command from part (e) to get the estimated DEff from your sample. Give one reason that this value is different from the DEff you computed for part (c).**
+
+The estimated DEff from my sample is 0.992. In this case, the cluster sample was more precise because the variance of the mean logsal for the selected 6 teams is less than the variance of the meal logsal for the data set.
+```{r}
+svymean(~logsal, design.baseball, deff=TRUE)
+```
