@@ -1,0 +1,180 @@
+---
+title: "Homework 2"
+author: "Jay Na"
+date: "Due by 1:50 pm, Wed. 1/23"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, error = TRUE)
+```
+
+### To Do: Complete before Wednesday's class (1/23)
+Use complete sentences to answer the questions below if you are asked for an *answer* or *explanation*. 
+
+Three data sets have been added to the data folder in this repository. To load one of these files, please use **relative file paths**. For example, to load the `fisheries.csv` data set, use the following command:
+
+```{r eval=FALSE}
+fisheries <- read.csv("data/fisheries.csv")
+```
+
+
+Push your knitted homework assignment (.Rmd and .md files) to GitHub by the given deadline.
+
+Also let me know: 
+
+**Who you worked with:**
+
+Dylan Rye, Aaron Prentice, Christian Zayton
+
+### Problem 1
+
+Explain why the following command does not color the data points blue, then write down the command that will turn the points blue.
+
+```{r}
+library(ggplot2)
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy, color = "blue"))
+```
+
+
+```{r}
+ggplot(data = mpg) + 
+  geom_point(mapping = aes(x = displ, y = hwy), color = "blue")
+```
+
+The "color = "blue" needs to be outside of the parentheses of aes() command because the color command in the aes() is looking for a variable then an actual color, whereas the color command when outside the parentheses treats the color phrase, "blue" in this example, as a color. 
+
+### Problem 2
+
+Revisit the `storms` data used in homework 1. 
+
+(a) Create a stacked bar chart that shows the proportion of storm `type`s that occur each `year`. Use `scale_fill_brewer` or `scale_fill_manual` to change the default coloring of the bars.
+
+```{r}
+library(nasaweather)
+
+ggplot(data = storms, mapping = aes(year, fill = type)) + geom_bar(position = "fill") + scale_fill_manual(values = c("blue","lightblue", "orange", "lightgreen")) + labs(title = 'Types of Storms (1995-2000)', y = "Proportion of Storms", x = "Year")
+
+```
+
+(b) Explain the perceptual difficulty with stacked bar charts. (Hint: think about the categories in the interior of the chart.)
+
+The difficulty with a stacked bar chart is that it is very hard to compare the different proportions for each category in the interior of the chart. You would have to measure and estimate using the y-axis, which is more work that shouldn't be necessary. It becomes more difficult for the reader to see specific trends throughout a period of time because the reader would be unable to see directly how much value has increased or decreased since initial positions on the y-axis would be dependent on how big the other category in the stacked bar chart is. 
+
+```diff
++ Stacked bar charts are difficult to decode because we need a common baseline to judge changes in length. So the trend for the category on the "ground floor" is easy to see but trends for those stuck in the middle are hard to see.
+```
+
+(c) Create another graphic that you feel better communicates the story the above stacked bar chart is attempting to tell.
+
+```{r}
+
+ggplot(data = storms, mapping = aes(year, fill = type)) + geom_bar(position = "dodge") + scale_fill_manual(values = c("blue","lightblue", "orange", "lightgreen")) + labs(title = 'Types of Storms (1995-2000)', y = "Number of Storms", x = "Year")
+
+```
+
+
+### Problem 3
+
+Given below are two data visualizations that violate many data visualization 
+best practices. Improve these visualizations using R and the tips for effective 
+visualizations that we introduced in class. You should produce one visualization 
+per data set. Your visualizaiton should be accompanied by a *brief* paragraph 
+describing the choices you made in your improvement, specifically discussing 
+what you didn't like in the original plots and why, and how you addressed them 
+in the visualization you created.
+
+#### (a) **Fisheries**
+
+Fisheries and Aquaculture Department of the Food and 
+Agriculture Organization of the United Nations collects data on fisheries 
+production of countries. [This Wikipedia page](https://en.wikipedia.org/wiki/Fishing_industry_by_country) 
+lists fishery production of countries for 2005. For each country tonnage from 
+capture and aquaculture are listed. Note that countries which harvested less 
+than 100,000 tons are not included in the data. The source data can be found 
+in the `fisheries.csv` data set (in the data folder of this assignment). The following plots were 
+produced based off the data given on the Wikipedia page.
+
+![fisheries-plot](img/fisheries.png)
+
+```{r, fig.width = 7, fig.height = 9}
+
+fisheries <- read.csv("data/fisheries.csv")
+fisheriesnew <- fisheries[-c(48),]
+
+ggplot((data = fisheriesnew), aes(x = country)) + 
+  geom_point(aes(y = capture),  color ="red") + 
+  geom_point(aes(y = aquaculture),  color = "blue") + 
+  coord_flip() + 
+  labs(title = "Countries' Tonnage from Fish Production", y = "Amount of Fish (in millions of tons)", x = NULL, caption = "*The People's Public of China has estimately 17 mil tons of fish captured and 32 mil tons of fish aquacultured") + 
+  scale_y_continuous(breaks = c(1000000, 2000000, 3000000, 4000000, 5000000, 6000000, 7000000, 8000000, 9000000, 10000000), labels = c("1", "2", "3", "4", "5", "6", "7", "8", "9", "10" )) +
+  annotate("text", x = 20, y = 7500000, label = "Total Fish Captured") + 
+  annotate("point", x = 20, y = 6000000, color = "red") +
+  annotate("text", x = 18, y = 7500000, label = "Total Aquacultured") + 
+  annotate("point", x = 18, y = 6000000, color = "blue")
+
+```
+
+Rather than trying to display the same data in three different graphs, I found it more efficient to display it as one. When using a pie chart, you are unable to observe the specific amounts of fish harvested and compare each country because the slices get so small and there are so many countries. Instead, I used a scatterplot so that you are able to see both the amount of fish captured and aquacultured. I changed the scale for the y-axis from the original graph to get rid of the excessive number of zeros. I added a title and axis labels. I got rid of the outlier China in the graph and included it as a caption because it made the scale of the graph too large and it was difficult to view the other countries and comparisons since China significantly had more fish. 
+
+```diff
++ Annotation on the graph is very misleading because they look like two actual data points
++ The pie charts are 3D, which create a perception problem since it distorts the already difficult to read angles
++ The plot using frequency polygons appears to be displaying the difference between catpure and aquaculture for each country, but this isn't clearly labeled! Also, there is no ordering of the countries, and sparse x-axis labels making this impossible to digest.
+```
+
+#### (b) **Instructional staff employee trends**
+
+The American Association of University Professors (AAUP) is a nonprofit membership association of faculty and other academic professionals. 
+[This report](https://www.aaup.org/sites/default/files/files/AAUP_Report_InstrStaff-75-11_apr2013.pdf) compiled by the AAUP shows trends in instructional staff employees between 1975 
+and 2011.
+
+The following plot was presented in that report.
+
+![instructors-plot](img/inst_staff.png)
+
+The source data can be found in the [`instructors.csv`] data set in the data folder of this assignment.
+
+```{r}
+instructors <- read.csv("data/instructors.csv")
+
+ggplot(data=instructors, aes(x = year, y = staff.pct, color = job)) + geom_line() +
+  labs(title = "Instructional Staff Employment Status Trends (1975-2011)", x = "Year",  y = "Staff Percentage")
+
+```
+
+Instead of using the different type of jobs as the x variable, I used the year variable to be able to see the trends in staff percentages overtime. Rather than using a bar graph, I used a line graph because now that we are looking at staff percentages overtime, the values for each year are related. It also makes it easier to see and compare just how much the percentages changes by looking at the slope of the lines in the line graph. The original graph had too many categories for each x variable, whereas the graph directly above switches which variable change in color (originally years but now job) and which variable is used in the x axis (originally job but now years) to make the graph easier and more simple to read.
+
+
+### Problem 4
+
+(An adaptation of exercise 3.7)
+
+Using the data set `Top25CommonFemaleNames.csv` (in the data folder of this assignment), recreate the "Median Names for Females with the 25 Most Common Names" graphic from FiveThirtyEight ([link to graphic](https://fivethirtyeight.com/wp-content/uploads/2014/05/silver-feature-most-common-women-names3.png?w=1150); [link to full article](https://fivethirtyeight.com/features/how-to-tell-someones-age-when-all-you-know-is-her-name/)).
+
+```{r, fig.height = 6, fig.width = 5}
+library(tidyverse)
+fnames <- read.csv("data/Top25CommonFemaleNames.csv")
+
+fnames$name <-factor(fnames$name, levels=fnames$name[order(desc(fnames$median_age))])
+
+
+ggplot(data = fnames, aes(x= name, y = median_age, ymin = q1_age, ymax = q3_age)) +
+  geom_pointrange(fill='red', color='gold', shape = 21, lwd = 5, fatten = .5) + 
+  labs(title = "Median Age For Females With the 25 Most 
+Common Names", subtitle = "Among Americans to be alive as of Jan. 1, 2014", y = NULL, x= NULL) + 
+  theme(plot.title = element_text(face = "bold")) +
+  theme(panel.background = element_rect(fill="white")) +
+  theme(axis.ticks = element_blank()) +
+  geom_hline(yintercept = c(15,25,35,45,55,65,75), color = "black", lwd = .1, linetype = "dotted") + 
+  coord_flip() +
+  scale_y_continuous(position = "right", breaks = c(15,25,35,45,55,65,75), labels = c("15 years old", 25,35,45,55,65,75)) + 
+  annotate("text", x = 24, y = 65, label = "median") + 
+  annotate("point", x = 24, y = 60, color = "red") +
+  annotate("text", x = 16, y = 27, label = "25th", size = 3) +
+  annotate("point", x = 16, y = 24, size = 2, shape = "diamond") +
+  annotate("text", x = 16, y = 48, label = "75th percentile", size = 3) +
+  annotate("point", x = 16, y = 56, size = 2, shape = "diamond")
+
+```
