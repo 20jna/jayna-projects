@@ -1,0 +1,311 @@
+---
+title: "Math 255 - Homework 8"
+author: "Jay Na"
+date: "Due in class, Friday, May 17"
+output: pdf_document
+---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, prompt=TRUE, comment=NULL,tidy.opts=list(width.cutoff=60),tidy=TRUE,eval=TRUE)
+```
+
+**The finalized version.**
+
+Use Rstudio to answer these questions and write your homework up using R Markdown. **If data is provided, use the R `survey` package to obtain any estimates asked for in a problem. Knit to Word or PDF prior to printing.**  Textbook data sets are in the R package `SDaA` unless you are told otherwise. 
+
+```{r, message=FALSE}
+library(SDaA)
+library(survey)
+library(tidyverse)
+```
+
+
+### Problem 1 *Lohr textbook ch. 5 exercise 23.* (on separate sheet)
+
+### Problem 2 *Lohr textbook ch. 5 exercise 11. Use the following cluster-level data set:*
+
+```{r}
+audit <- read.csv("http://math.carleton.edu/kstclair/data/audit.csv")
+```
+
+**a)** The estimate error rate is 0.435 with an SE of 0.077.
+```{r}
+audit$N <- 828
+audit$n <- 85
+audit$wts <- audit$N/audit$n
+
+audit.clusdesign <- svydesign(id= ~form, fpc= ~N, weights= ~wts, data = audit)
+svymean(~errors, audit.clusdesign)
+```
+
+**b)** The estimate total number of errors is 360.42 errors with an SE of 63.565.
+```{r}
+svytotal(~errors, audit.clusdesign)
+```
+
+**c)** The DEff that compares the estimated variances is 1. This means that the variance is the same for the cluster estimate as it is for the estimated variance of an equivaletnly sized SRS of 18,275 fields. And so, the estimated SRS variance is 0.006.
+```{r}
+svymean(~errors, audit.clusdesign, deff = TRUE)
+0.07677^2
+```
+
+### Problem 3 *Lohr textbook ch. 5 exercise 8.*
+```{r}
+books <- read.csv("http://math.carleton.edu/kstclair/data/books.csv")
+```
+
+**a)** The means and variances do not appear to be the same. In fact, the means and variances seem to vary quite a bit.
+```{r}
+boxplot(replace~shelf, data = books, main = "Replacement Cost Distribution of Books
+        For each Shelf", xlab = "Shelf Number", ylab = "Replacement Cost (Dollars)")
+```
+
+**b)** The total replacement cost estimate is $361,653 with a SE of 68802. The CV is 0.190. 
+```{r}
+books$elem.id <- 1:nrow(books)
+books$N <- 44
+books <- books %>% group_by(shelf) %>% mutate(mi = n()) %>% ungroup()
+books$wts <- books$N*books$Mi/books$mi
+
+books.clus2design <- svydesign(id= ~factor(shelf)+elem.id, fpc= ~N+Mi, weights= ~wts, data = books)
+
+svytotal(~replace, books.clus2design, deff=TRUE)
+
+(cv1 <- 68802/361653)
+```
+
+**c)** The estimate average replacement cost per book is $23.611 with a SE of 2.898. The CV is 0.123.
+```{r}
+svymean(~replace, books.clus2design, deff=TRUE)
+
+(cv2 <- 2.898/23.611)
+```
+
+### Problem 4 *Lohr textbook ch. 5 exercise 10.*
+The estimate adjusted Rsquared value is 0.649. With such a low adjusted Rsquared value, we can infer that books on the same shelf do not tend to have more similar replacement costs. If all shelves had 30 books and c1=100 and c2=4, then we should sample 1 book per shelf.
+```{r}
+summary(aov(replace~factor(shelf), data = books))
+
+M <- 5
+msb <- 25571/11
+msw <- 23445/48
+N <- 44
+
+(S2.hat <- (M*(N-1)*msb/2 + (.5*N*M + 5/2 - 1)*msw)/(N*M-1))
+
+(ra2 <- 1-msw/S2.hat)
+```
+
+```{r}
+c1 <- 10
+c2 <- 4
+
+(m.opt <- sqrt((c1*30*(44-1)*(1-ra2))/(c2*(44*30-1)*ra2)))
+```
+
+### Problem 5 **Lohr textbook ch. 5 exercise 12. Also use your "appropriate plot" to describe whether clusters look to be homogeneous with respect to length.**
+
+The estimate average egg length is 48.649 cm with a SE of 5.476. With small variability between each cluster, the clusters appear to be heterogeneous rather than homogeneous with respect to length.
+```{r, fig.height=5, fig.width =6}
+coots$elem.id<- 1:nrow(coots)
+coots <- coots %>% group_by(clutch) %>% mutate(mi = n()) %>% ungroup()
+coots$wts <- coots$csize/coots$mi
+coots.design<-svydesign(id=~clutch+elem.id, weights= ~wts, data=coots)
+
+svymean(~length, coots.design, deff=T)
+
+ggplot(coots, aes(x=clutch, y=length)) + geom_point() + labs(x = "Clutch Number", title="Plot of Lengths by Clutch Cluster")
+```
+
+### Problem 6 *Lohr textbook ch. 5 exercise 15.*
+Both data files `teachers` and `teachmi` are in `SDaA` and their variable files are
+
+- http://math.carleton.edu/kstclair/data/SDaADescriptions/teachers.pdf
+- http://math.carleton.edu/kstclair/data/SDaADescriptions/teachmi.pdf
+
+```{r}
+# schools are uniquely ID'd (across all stratum) by `school`
+n_distinct(teachers$school)
+n_distinct(teachmi$school)
+# add Mi and mi to teachers data
+teachers.mi <- left_join(teachers, teachmi, by = "school")
+# then filter to large stratum and make -9 into NAs 
+teachers.mi$hrwork[teachers.mi$hrwork == -9] <- NA
+
+teachernew <- teachers.mi %>% filter(dist.x == "large")
+```
+
+**a)** A cluster sample would be a better design than an SRS because with 15, 086 teachers, seeking out each specific teacher that was selected in the SRS to have them participate in the survey can be a difficult and extensive task. When clustering the teachers by school, they would able to get large samples of teachers per school than having to go to a large amount of schools that only have perhaps a couple teachers chosen. Another issue would be that you would most likely have to get permission from the school to get information from the teachers about the workload and so, shorting the amount of schools that teachers would be selected from would be more efficient and less costly. A disadvantage is that the workload for teachers from the same schools are most likely correlated and so the estimate for her target population would be biased. Also, there would be some noncoverage with certain schools in the area that would not be accounted for.
+
+**b)** The mean of hrwork and standard deviation for each school is shown below. There seems to be more variation within a school than between. We dealth with missing values by exluding it from the svymean but keeping it in the design.
+```{r}
+hwrkfull <- teachernew %>% group_by(school) %>% summarize(mean.hw = mean(hrwork, na.rm=TRUE), sd.hw = sd(hrwork,na.rm=TRUE)) 
+
+hwrkfull
+
+plot(mean.hw~school, data=hwrkfull, main = "Mean Homework Hours by School", xlab = "School Number", ylab = "Mean Hours of Homework")
+plot(sd.hw~school, data=hwrkfull, main = "SD Homework Hours by School", xlab = "School Number", ylab = "Mean Hours of Homework")
+```
+
+**c)** There seems to be more variability in schools with higher workloads. However, there are not as many schools with lower mean homework hours to correctly assess the relation between them.
+```{r}
+plot(sd.hw~mean.hw, data=hwrkfull, main = "SD vs Mean Homework Hours for Schools", xlab = "Mean HW Hours", ylab = "SD HW Hours")
+```
+
+**d)** The mean of hrwork for each school is 33.821 hours with a standard deviation of 0.717.
+```{r}
+teachernew$elem.id<- 1:nrow(teachernew)
+teachernew$N <- 311
+teachernew$wts2 <- (teachernew$N*teachernew$popteach)/(23*teachernew$ssteach)
+teachernew.design2<-svydesign(id= ~factor(school)+elem.id, fpc= ~N+popteach, weights= ~wts2, data= teachernew)
+
+svymean(~hrwork, teachernew.design2, data = teachernew, na.rm=TRUE)
+```
+
+### Problem 7 *Lohr textbook ch. 8 exercise 12.*
+Use EDA tools to complete part (c) and consider all measured variables, not just `hrwork`. 
+
+**a)** The overall response rate is 0.568.
+```{r}
+teachernew2 <- left_join(teachers, teachmi, by = "school")
+
+teachernew2$N <- 245
+teachernew2$n <- 23
+teachernew2$wts <- teachernew2$N/teachernew2$n
+
+teachernew2$rr <- teachernew2$ssteach/teachernew2$popteach
+
+rr.design <- svydesign(id= ~school, fpc= ~N, weights= ~wts, data = teachernew2)
+
+svymean(~rr, rr.design, deff=TRUE) #overall response rate
+```
+
+
+**b)** I would expect nonresponse bias in the study. I would expect the bias to occur for teachers with lower workloads. I believe teachers that spend a lot less time working at school than other teachers to be less inclined to respond because they wouldn't want people to know that they didn't work as much as others. Also, most likely the survey had to get permission from the school and so they may believe that the school would find out about their lower hours of workload.
+
+**c)** EDA shows that for hrwork, the means for the non-reponders were at most times relatively similar in comparison to the mean workloads for the responders. However, the means do not equal and the distributions for the responders had longer tails and larger ranges than the distribution of the non-responders most likely due to the difference in sample sizes.
+```{r}
+hist(teachnr$hrwork)
+hist(teachers$hrwork)
+
+hist(teachnr$size)
+hist(teachers$size)
+
+hist(teachnr$preprmin)
+hist(teachers$preprmin)
+
+hist(teachnr$assist)
+hist(teachers$assist)
+```
+
+**d)** Although the means of the respondents and nonrespondents are relatively similar, they do differ in values for all variables. If the case was that they equal, then we see evidence that there is no nonresponse bias in the sampling design. However, because they do not equal, the values of the nonrespondents would have an effect on the overall average values. Thus, there is evidence of nonresponse bias in the design.
+
+### Problem 8 *Look at Lohr textbook ch. 5 exercise 21*
+
+**(a) Construct a histogram of the ozone values in the population and compute the mean and SD of ozone levels in the population. To do this, create a long version of the data called `ozone.long` where `level` is all ozone levels measured from 1994 to 1995:**
+
+The mean ozone value is 27.610 ppb with an SD of 11.424.
+```{r}
+ozone.long <- gather(ozone, key = hour, value = level, GMT1:GMT24)
+
+hist(ozone.long$level, main="Ozone Level Distribution", xlab= "Ozone Level (ppb)")
+
+mean(ozone.long$level, na.rm=TRUE)
+sd(ozone.long$level, na.rm=TRUE)
+```
+
+**(b) Take a systematic sample with period 24 (i.e. pick every 24th value). To do this, select a random integer `k` betweeh 1 and 24, and select the column in `ozone` containing the observations with GMT `k`. Construct a histogram and sample mean of the sampled values and compare it to your population distribution and population mean from part (a).**
+
+The mean of the systematic sample is 32.580 ppb which is relatively larger than the population mean estimate from part a. The systematic distribution looks a bit more normal than part a but are both relatively similar.
+```{r}
+set.seed(2344132)
+start <- sample(1:24, size=1, replace = FALSE)
+start #k
+
+ozone.sys = ozone.long[ozone.long$hour =="GMT16",]
+
+hist(ozone.sys$level, main="Ozone Level Syst. Distribution", xlab= "Ozone Level (ppb)")
+
+mean(ozone.sys$level, na.rm = TRUE)
+```
+
+
+**(c) Now suppose you treated your systematic sample as though it was a SRS. Use your sample to compute a 95% confidence interval for the population mean ozone level. Does your CI contain the population mean?**
+
+The 95% CI is (31.746, 33.413), which does not contain the population mean.
+```{r}
+ozone.sys$N <- 17520
+ozone.sys$n <- 730
+
+ozone.design <-svydesign(id = ~1, fpc= ~N, weight = ~(N/n), data = ozone.sys)
+svymean(~level, ozone.design, na.rm=TRUE)
+confint(svymean(~level, ozone.design, na.rm=TRUE))
+```
+
+**(d) Graph the ozone levels against hour of the day using the `ggplot2` command below. Then comment on whether you think your systematic sample mean's SE is well approximated by the SRS SE you computed in part (c). E.g. is your SE in part (c), over or underestimating the true variability of your systematic sample or are the two SEs similar.**
+
+My systematic sample mean SE is very small, which is not similar to the SE of the graph, which is curved. This curvation makes me believe that the my SE in part c is an understimation of the true variability of the systematic sample. 
+```{r}
+ggplot(ozone.long, aes(x=parse_number(hour), y=level)) + geom_point() + geom_smooth()
+```
+
+**(e) Select four systematic samples with period $k=96$ so that you have four samples of either 182 or 183 elements for a total element-level sample size of about 730 (same size as part a). Then treat this sample as a one-stage cluster sample of four clusters and estimate the mean ozone level with a 95% confidence interval. Does this CI contain the population mean?**
+
+The estimate mean ozone level is 27.955 ppb with a 95% CI of (27.752, 28.159). The population mean from part a is just outside this CI.
+```{r}
+set.seed(23454)
+start <- sample(1:96, size=4, replace = FALSE)
+start
+```
+
+```{r}
+rows.samp1 <- 66 + 96*(0:182)
+head(rows.samp1)
+data.samp1 <- slice(ozone.long, rows.samp1)
+data.samp1$cluster <- "cluster 1"
+data.samp1$clustersize <- nrow(data.samp1)
+str(data.samp1)
+```
+
+```{r}
+rows.samp2 <- 48 + 96*(0:182)
+head(rows.samp2)
+data.samp2 <- slice(ozone.long, rows.samp2)
+data.samp2$cluster <- "cluster 2"
+data.samp2$clustersize <- nrow(data.samp2)
+str(data.samp2)
+```
+
+```{r}
+rows.samp3 <- 53 + 96*(0:182)
+head(rows.samp3)
+data.samp3 <- slice(ozone.long, rows.samp3)
+data.samp3$cluster <- "cluster 3"
+data.samp3$clustersize <- nrow(data.samp3)
+str(data.samp3)
+```
+
+```{r}
+rows.samp4 <- 19 + 96*(0:182)
+head(rows.samp4)
+data.samp4 <- slice(ozone.long, rows.samp4)
+data.samp4$cluster <- "cluster 4"
+data.samp4$clustersize <- nrow(data.samp4)
+str(data.samp4)
+```
+
+```{r}
+data.sys <- bind_rows(data.samp1, data.samp2, data.samp3, data.samp4)
+```
+
+```{r}
+data.sys$N <-731
+data.sys$n <- 183
+data.sys$wts <-data.sys$N/data.sys$n
+
+clus2.design <- svydesign(id = ~cluster, weights = ~wts, fpc = ~N, data = data.sys)
+svymean(~level, clus2.design, na.rm=TRUE)
+confint(svymean(~level, clus2.design, na.rm=TRUE))
+```
+
+
