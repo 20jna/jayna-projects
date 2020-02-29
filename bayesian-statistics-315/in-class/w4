@@ -1,0 +1,48 @@
+---
+title: "Gibbs Sample (in class)"
+author: "Jay Na"
+date: "10/25/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(MCMCpack)
+library(tidyverse)
+stroop <- read.csv("http://aloy.rbind.io/data/stroop_game.csv")
+
+stroop_color <- subset(stroop, Type == "Color")
+stroop_stnd <- subset(stroop, Type == "Standard")
+
+col_times <- stroop_color[,3]
+stnd_times <- stroop_stnd[,3]
+
+sigma2 <- rinvgamma(0.01,0.01)
+n <- 20
+u <- rnorm(0,100)
+delta <- 
+
+y <- mean(stroop$time)
+
+mu <- 
+  
+for(i in 1:S){
+# 1st sample
+a <- ((1/sigma2)*sum(Yi) + (1/sigma2)*sum(Yj-delta))/((1/sigma2)*(n+m) + 1/100^2)
+b <- 1/((n+m)/sigma2 + 1/100^2)
+mu <- rnorm(20,a, b)
+
+# 2nd sample
+a2 <- ((1/sigma2)*sum(Yi-mu))/()
+b2 <- (sum(bvar/(sigma2^2))/b + 1)
+bvar <- rgamma(1, a2, b2)
+
+# draws
+mcmc.draws[i,] <- c(sigma2, bvar)
+}
+
+```
+
