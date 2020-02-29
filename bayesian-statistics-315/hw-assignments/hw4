@@ -1,0 +1,163 @@
+---
+title: 'Homework #4'
+author: "Jay Na collab w/ Travis Brown"
+date: "9/30/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**2.4a)** on separate sheet
+
+**2.4b)** The 95% equal-tailed credible interval is estimately (0.152, 0.587).
+```{r, fig.width = 3.5, fig.height = 3.5}
+set.seed(1425)
+
+m <- 5
+Y <- 10
+a <- 1
+b <- 1
+
+theta <- seq(0.001,1,by=.01)
+prior <- dunif(theta, min = 0, max = 1)
+likelihood <- dnbinom(Y, size = m, prob = theta)
+unstd.posterior <- prior*likelihood
+posterior <- (prior*likelihood)/(sum(unstd.posterior))
+
+plot(x = theta, y = posterior, type = "l", xlab = expression(theta), 
+     ylab = "Posterior Value", main = "Posterior Distribution of Theta")
+
+# 95% Credible Interval
+qbeta(c(0.025, 0.975), m+a, b+Y)
+```
+
+**2.5)** hand work on separate sheet
+
+a is estimately 56.914 and b is estimately 0.754.
+```{r, warning = FALSE}
+library(BB)
+
+# function for variance of gamma(a,b)
+gamma.var <- function(x) x[1] / (x[2]^2)
+
+# system of equations
+gamma.solve <- function(x){
+  obj1 <- gamma.var(x) - 100
+  obj2 <- qgamma(0.5, shape = x[1], rate = x[2]) - 75 
+  return(c(obj1, obj2))
+  }
+
+beta.params <- BBsolve(c(1,1), gamma.solve, quiet = TRUE)
+beta.params$par
+```
+
+**2.8)**
+
+**a)** separate sheet
+
+**b)** The 95% credible interval when a=b=0.01 is (0.639, 1.158) with a posterior mean of 0.880.
+```{r}
+a <- 0.01
+b <- 0.01
+ytot <- 44
+n <- 50
+lambda <- seq(0.01,1,by = .01)
+
+posterior1 <- dgamma(lambda, ytot+a, b+n)
+plot(x=lambda, y=posterior1, type = "l", main = "Posterior Distribution of Lambda
+     (a=.1,b=.1)", xlab = expression(lambda), ylab = "Posterior Value")
+
+# posterior mean
+(ytot+a)/(b+n)
+
+# 95% credible interval
+qgamma(c(0.025, 0.975), ytot+a, b+n)
+```
+
+**c)** The 95% credible interval when a=b=0.1 is (0.640, 1.158) with a posterior mean of 0.880. The 95% credible interval when a=b=1 is (0.644, 1.158) with a posterior mean of .882. As shown, the values of a and b have little effect towards the outcome of the posterior since the graphs of the posterior remain relatively the same when they change. Meaning the sensitivity of the prior is "weak" when it pertains to the posterior.
+```{r}
+a <- 0.1
+b <- 0.1
+
+posterior <- dgamma(lambda, ytot+a, b+n)
+plot(x=lambda, y=posterior, type = "l", main = "Posterior Distribution of Lambda
+     (a=.1,b=.1)", xlab = expression(lambda), ylab = "Posterior Value")
+
+# posterior mean
+(ytot+a)/(b+n)
+
+# 95% credible interval
+qgamma(c(0.025, 0.975), ytot+a, b+n)
+```
+
+```{r}
+a <- 1
+b <- 1
+
+posterior <- dgamma(lambda, ytot+a, b+n)
+
+plot(x=lambda, y=posterior, type = "l", main = "Posterior Distribution of Lambda
+     (a=1,b=1)", xlab = expression(lambda), ylab = "Posterior Value")
+
+# posterior mean
+(sum(Y)+a)/(b+n)
+
+# 95% credible interval
+qgamma(c(0.025, 0.975), sum(Y)+a, b+n)
+```
+
+**d)** The Poisson likelihood fits well with the data as it follows relatively along the probability curve.
+```{r}
+y <- c(rep(0,30), rep(1,12), rep(2,6), rep(10,2))
+
+plot(table(y)/50, main = "Poisson Likelihood Fit Test", ylab ="Probability Values")
+points(dpois(0:10,.88))
+```
+
+**e)** The posterior probability that this medication has a higher side effect rate that the previous mediation is 10%. The results are not sensitive to the prior.
+
+
+**2.9)**
+
+**a)** A negative binomial distribution for Y given expression(theta) is reasonable because our m, or in this case the day the relapse occurred, is where the probability curve peaks. In other words, the max point is the day with the highest probability of relapse, which works well with our example since we want our highest peak to be at 7 days, the last day of the most difficult period. A negative binomial also makes sense because before it reaches its peak, the probability curve steeply increases, which translates to how it becomes significantly more difficult day by day before the 7 day mark increasing the probability of relapsing. Quitting something like smoking after becomes easier after a certain period of time, which again is said to be 7 days. The probability of relapsing decreases significantly as does any negative binomial curve after its m value. The probability remains significantly low as more time passes, which translates to how, let's say in 10 years then to 20 years, the urge to relapse would be very low.
+
+**b)** The probability the smoker will be smoke-free for at least 7 days as a MAP estimate is 13%.
+```{r}
+set.seed(234123)
+theta <- runif(1000,0,1)
+
+ys <- rnbinom(1000, size = 1, prob = theta)
+  
+mean(ys>=7)
+```
+
+**c)**
+```{r, fig.width = 3.5, fig.height = 3.5}
+m <- 7
+Y <- 5
+
+theta <- seq(0.001,1,by=.01)
+prior <- dunif(theta, min = 0, max = 1)
+likelihood <- dnbinom(Y, size = m, prob = theta)
+
+unstd.posterior <- prior*likelihood
+posterior <- (prior*likelihood)/(sum(unstd.posterior))
+
+plot(x = theta,y = posterior, type = "l", xlab = expression(theta), 
+     ylab = "Posterior Value", main = "Posterior Distribution of Theta
+     (Y=5)")
+```
+
+**d)** The probability that the second attempt will result in at least 7 smoker-free days is .9%.
+```{r}
+set.seed(234123)
+
+theta_draws <- sample(theta, size = 1000, replace=TRUE, prob = posterior)
+
+ys1 <- rnbinom(1000, size = 1, prob = theta_draws)
+  
+mean(ys1 >=7)
+```
+
