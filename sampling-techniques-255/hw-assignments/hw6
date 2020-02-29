@@ -1,0 +1,190 @@
+---
+title: "Math 255 - Homework 6"
+author: "Jay Na (work w/ Christian Zaytoun & Aaron Prentice)"
+date: "Due in class, Friday, May 3"
+output: pdf_document
+---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(collapse=TRUE, prompt=TRUE, comment=NULL,tidy.opts=list(width.cutoff=60),tidy=TRUE,eval=TRUE)
+```
+
+```{r, message = FALSE}
+library(SDaA)
+library(tidyverse)
+```
+
+
+### Problem 1
+*Lohr textbook ch. 4 exercise 4*
+
+**a)** The estimate proportion of female members who are in academia is 0.522 with a 95% confidence interval of (0.389, 0.654).
+```{r}
+ssc <- read.csv("http://math.carleton.edu/kstclair/data/ssc.csv")
+
+table(ssc$sex, ssc$occupation)
+
+(prop1 <- 24/(24+10+12)) #prop estimate
+
+s2 <-(46/45)*(prop1)*(1-prop1) #s2 of prop
+(sed <- ((1-(150/864))^.5) * ((s2^.5 )/(46^.5))) #se of prop
+
+prop1 - 1.96*sed #lower bound 95% CI
+prop1 + 1.96*sed #upper bound 95% CI
+```
+
+**b)** The estimate total number of female members in academia 128 women with a 95% CI of estimately (92, 185).
+```{r}
+(tot1 <- 864*(46/150)*prop1) #total estimate
+
+(tot_s2 <- ((45*s2)+((45*prop1^2)*(1-(46/150))))/(149)) #s2 of total
+(tot_se <- 864*((1-(150/864))*(tot_s2/150))^.5) #se of total
+
+tot1 - 1.96*tot_se #lower bound 95% CI
+tot1 + 1.96*tot_se #upper bound 95% CI
+```
+
+### Problem 2
+*Lohr textbook ch. 4 exercise 5*
+
+The average green fee on a weekend to play 18 holes is $34.83 with a standard error of 22.75 dollars.
+```{r}
+golf18 <- golfsrs %>% filter(holes == 18)
+
+summary(golf18$wkend18) 
+
+(se3 <- (101-10)/4) #se estimate
+```
+
+### Problem 3
+*Lohr textbook ch. 4 exercise 43.*
+
+```{r}
+pop <- read.csv("http://math.carleton.edu/kstclair/data/baseball.csv", header=FALSE, na.strings = c("NA"," ", "."))
+
+names(pop) <- c("team","league","player","salary","POS","G","GS", "InnOuts","PO", "A","E","DP","PB","GB","AB","R","H","SecB","ThiB","HR","RBI","SB","CS","BB","SO", "IBB","HPB","SH","SF","GIDP")
+
+pop$logsal <- log(pop$salary)
+
+n <- 150
+set.seed(2563256)
+srs <- sample(1:nrow(pop), size = n, replace = FALSE) 
+baseball_srs <- pop[srs,]
+```
+
+**a)** Answer in printed table.
+```{r}
+N <- nrow(pop)
+
+baseball_srs2 <- baseball_srs  %>% 
+  group_by(POS) %>% 
+  mutate(n = n())
+
+baseball_srs2 <- baseball_srs2 %>% 
+  group_by(POS) %>% 
+  mutate(mean.logsal = (mean(logsal)))
+
+baseball_srs2$ydif <- baseball_srs2$logsal - baseball_srs2$mean.logsal
+
+baseball_srs2 <- baseball_srs2 %>% 
+  group_by(POS) %>% 
+  mutate(s2  = (sum(ydif^2)/(n-1)))
+
+baseball_srs2$se <- sqrt((1-(150/N))*(baseball_srs2$s2/baseball_srs2$n))
+
+pos <- c("1B", "2B", "3B","C", "CF", "LF", "P", "RF", "SS")
+est_mean <- c(13.87, 12.91, 14.36, 14.04, 14.13, 14.24, 13.91, 14.87, 14.47)
+se <- c(0.21, 0.13, 0.39, 0.29, 0.33, 0.56, 0.13, 0.41, 0.40)
+
+df <- data.frame(pos,est_mean,se)
+names(df) <- c("Position","Mean of Logsal", "SE of logsal")
+
+print(df)
+```
+
+**b)** The estimate ratio for the population is 0.216 with a 95% CI of (0.216, 0.260).
+```{r}
+y.hat <- mean(baseball_srs$HR)
+x.hat <- mean(baseball_srs$R)
+(B <- y.hat/x.hat) #ratio estimate
+
+
+cor <- cor(baseball_srs$R, baseball_srs$HR)
+sd.y <- sd(baseball_srs$HR)
+sd.x <- sd(baseball_srs$R)
+s.squared.e <- sd.y^2+(B^2*sd.x^2)-(2*B*cor*sd.y*sd.x)
+
+(se.ratio <- sqrt((1-(150/N))*(s.squared.e/(150*(x.hat^2))))) #se of ratio
+
+B - 1.96*se.ratio
+B + 1.96*se.ratio
+```
+
+### Problem 4
+*Read Lohr textbook ch. 4 exercise 15, then answer the questions below.*
+
+**(a) Estimate the mean concentration of lead in the area using the systematic sample and give a SE. (Assume that this sample behaves like a SRS). Repeat for the mean concentration of copper.**
+The estimate mean concentration of lead in the area is 127 mg/kg with a SE of 146 mg/kg. The estimate mean concentration of copper in the area is 35 mg/kg with a SE of 16 mg/kg. 
+
+**(b) Redo (a) but this time use the poststratified sample. Since points are sampled on a grid you can assume proportional allocation where $N_h/N = n_h/n$.**
+The estimate mean concentration of lead in the area is 126.967 mg/kg with a SE of 62.612 mg/kg. The estimate mean concentration of copper in the area is 34.760 mg/kg with a SE of 7.710 mg/kg. 
+```{r}
+prop_a <- 82/121
+prop_b <- 31/121
+prop_c <- 8/121
+(mean2_lead <- (71*prop_a) + (259*prop_b) + (189*prop_c)) #estimate mean for lead
+
+(se2_lead <- sqrt((28*prop_a)^2+(232*prop_b)^2+(79*prop_c)^2)) #se for mean of lead
+
+
+prop_a2 <- 82/121
+prop_b2 <- 31/121
+prop_c2 <- 8/121
+
+(mean2_cop <- (28*prop_a2) + (50*prop_b2) + (45*prop_c2)) #estimate mean for copper
+
+(se2_cop <- sqrt((9*prop_a2)^2+(18*prop_b2)^2+(15*prop_c2)^2))
+```
+
+**(c) Compare your estimates/SEs in (b) to those from part (a) and use your results to a recommendation about use of stratification in future surveys to increase precision.**
+The estimate mean for lead and copper from part b (126.967mg/kg and 34.760mg/kg) are slightly lower but relatively similar to the answers from part a (127mg/kg and 35mg/kg). The SEs of lead and copper from part b (62.612mg/kg and 7.710mg/kg) are lower than the SEs from part a (146mg/kg and 35mg/kg). And so, stratification should be used when the stratas have a lot of variance between them in order to increase precision in future surveys.
+
+**(d) The poststratified variance in (eq. 4.22) requires some assumptions to be met. Discuss whether or not these assumptions are met for this problem and comment on violation of these assumptions might effect your conclusion to part (c).**
+The assumptions are that the Nh/N ratio is known, all nh's have at least 30 samples, or that the sample size in each stratum are large enough (CLT is met). Stratum C has an nh  = 8, which is too small to fufill the assumptions, which mostly likely will mean that the standard error of stratum h in our equation for proportional variance will be different. In this example, the SE of the systematic sample estimates is twice the post-stratified estimates, which suggests that the poststrtified estimates are much more precise even though systematic sample estimates could be better estimators. 
+
+### Problem 5
+```{r}
+golfsrs2 <- golfsrs %>% filter(holes == 9 | holes == 18)
+```
+
+**(a) Estimate the proportion of all courses that have a golf pro and give a SE.**
+The estimate proportion of all courses that have a golf pro is 0.731 with an SE of 0.041.
+```{r}
+n<-nrow(golfsrs2)
+N <-  14938
+
+summary(golfsrs2$pro)
+(p.hat <- 87/n) #estimate prop
+
+se_p.hat <- sqrt((119/118)*(p.hat*(1-p.hat)))
+(se <- (sqrt(1-(n/N)))*(se_p.hat/(sqrt(n)))) #se of prop
+```
+
+**(b) Repeat part (a) using a  poststratified estimate and SE using the fact that within the entire population, 3735 courses are 9 holes and 11203 are 18 holes.**
+The poststratified estimate proportion is 0.747 with an SE of 0.067.
+```{r}
+golfsrs2 %>% 
+  group_by(holes) %>% 
+  summarize(mean(pro=="y"))
+
+N <- 3735+11203
+prop9 <- 3735/N
+prop18 <- 11203/N
+
+(prop_ps <- prop9*0.412 + prop18*0.859) #postratified estimate
+#se poststratified
+(se_ps <- sqrt(prop9*(0.412*(1-0.412)/18) + (prop18*((1-0.859)*0.859)/85))) 
+```
+
+**(c) Compare estimate values and carefully explain why the postratified estimate is (higher/lower) than the SRS estimate.**
+The estimate for the post-stratified proportion (0.747) is slightly larger than but relatively similar to the SRS estimate proportion (0.731). The SE of the post-stratified estimate (0.067) is larger than the SRS SE (0.041). The poststratified estimate is higher than the SRS because stratified sampling is more effective than SRS when the stratas are similar to each other.
