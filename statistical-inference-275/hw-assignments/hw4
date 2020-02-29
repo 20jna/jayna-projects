@@ -1,0 +1,260 @@
+---
+title: "Math 275 HW#4"
+author: "Jay Na"
+date: "4/16/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+**1. Exercise 4.24** 
+
+**a)** 
+```{r, fig.height = 4, fig.width = 4}
+set.seed(12332)
+n1 <- 30 #n
+numSamples <- 10000 #number of simulated datasets
+
+mean1 <- matrix(rexp(n1*numSamples, 1/3), nrow = n1, ncol = numSamples) #sampling simulation
+
+meanbar1 <- colMeans(mean1) #sampling distribution
+
+hist(meanbar1, main = "Simulated Sampling Distribution 
+     of Xbar (4.24)", xlab = "Mean Value")
+```
+
+**b)** The mean of simulated sampling distribution, 2.993, is very close to the theoretical mean, 3, which is the inverse of lambda. However, the standard deviation of the simulated sampling distribution, 0.543, is much smaller than the theoretical standard deviation, 3. 
+```{r}
+mean(meanbar1) #simulated mean
+sd(meanbar1) #simulated standard deviation
+```
+
+**c)** From the stimulation, the probability of X bar being less than or equal to 3.5 is 0.832 with an empirical check. 
+```{r}
+mean(meanbar1 <= 3.5) #emipirical check of P(mean <= 3.5)
+```
+
+**d)** Assuming the CLT approximation holds, the probability of X bar being less than or equal to 3.5 is estimately 0.819, which is 0.013 less than the empirical check from the stimulation meaning they are relatively similar.
+```{r}
+z1 <- (3.5-3)/(3/sqrt(n1)) #z-score when xbar equals 3.5
+
+pnorm(z1) #cdf of N(0,1)
+```
+
+**2. Exercise 5.9**
+
+**a)** The simulated sampling distribution looks approximately normal, unimodel, and symmetrical centered at roughly a mean of 20 with a standard deviation of relatively 1. There may be several outliers on the outer tails of the distribution. 
+```{r, fig.height = 4, fig.width = 4}
+set.seed(4949)
+n2 <- 200 #n
+
+#sample simulation
+mean2 <- matrix(rgamma(n2*numSamples, 5, rate = 1/4), nrow = n2, ncol = numSamples)
+meanbar2 <- colMeans(mean2) #sampling distribution
+
+hist(meanbar2, main = "Simulated Sampling Distribution 
+     of Xbar (5.9a)", xlab = "Mean Value")
+```
+
+**b)** The mean and standard deviation of this sample distribution is 19.966 and 0.652, respectively.
+```{r, fig.height = 4, fig.width = 4}
+set.seed(24212)
+
+sample200 <- sample(meanbar2, n2, replace = FALSE) #sample 200 from population
+hist(sample200, main = "Sampling Distribution of Xbar (5.9b)", xlab = "Mean value")
+
+mean(sample200) #mean of sample
+sd(sample200) #standard deviation of sample
+```
+
+**c)** The mean of the bootstrap distribution is 19.965 and 0.046, respectively.
+```{r, fig.height = 4, fig.width = 4}
+set.seed(4949)
+
+bootMeans1 <- numeric(numSamples)
+for(b in 1:numSamples){
+  # randomly sample with replacement from original observations:
+  bootSample <- sample(sample200, n2, replace = TRUE)
+  
+  # re-calculate the sample mean:
+  bootMeans1[b] <- mean(bootSample)
+}
+
+hist(bootMeans1, main = "Bootstrap Distribution of the Mean", xlab = "Mean value")
+
+mean(bootMeans1) #bootstrap mean
+sd(bootMeans1) #standard deviation of boostrap (estimate of true SE)
+```
+
+**d)**
+```{r}
+table5d <- matrix(c(20,1,19.966,0.652,19.965,0.046), ncol=2, byrow=TRUE)
+rownames(table5d) <- c("Simulated Pop. Distr. (rough estimate)","Approx. Theoretical Sampling Distr. of Xbar", "Bootstrap Distribution")
+colnames(table5d) <- c("Mean", "Standard Deviation")
+
+as.table(table5d)
+```
+      
+**e)** As the sample size of n becomes smaller, the bootstrap distribution is still centered at the observed statistic, which in this case is the mean. However, the standard deviation of the bootstrap distribution is larger when n is smaller, which suggests that the data is further spread out and the precision of the distribution decreases.
+
+**3. Exercise 5.13**
+
+**a)** The distribution looks slightly skewed left with its distribution centered at a median of roughly 0.13 with an IQR of roughly of 0.07. There also appears to be a strong outlier right of the distribution.
+```{r, fig.height = 4, fig.width = 4}
+data(FishMercury, package = "resampledata")
+
+mercury <- FishMercury$Mercury
+
+boxplot(mercury, main = "Distribution of Mercury Levels (5.13)", ylab = "Mercury value (parts per million)")
+```
+
+**b)** The bootstrap distribution has a mean of 0.182 and a standard error of 0.058. The 95% bootstrap percentile interval is (0.112, 0.306). This means that with 95% confidence, the average mercury level for the fish in lakes in Minnesota is between 0.112 and 0.306 parts per million.
+```{r}
+set.seed(15267)
+
+bootMeans2 <- numeric(numSamples)
+for(b in 1:numSamples){
+  # randomly sample with replacement from original observations:
+  bootSample <- sample(mercury, 30, replace = TRUE)
+  
+  # re-calculate the sample mean:
+  bootMeans2[b] <- mean(bootSample)
+}
+
+mean3b <- mean(bootMeans2) #estimate boot mean
+mean3b
+
+se3b <- sd(bootMeans2) #standard error of bootstrap 1
+se3b
+
+quantile(bootMeans2, c(0.025, 0.975)) # bootstrap 95% CI
+```
+
+**c)** The boostrap mean without the outlier is 0.124 and the standard error is 0.008. The 95% CI is (0.108, 0.139). This means that with 95% confidence, the average mercury level for the fish in lakes in Minnesota is between 0.108 and 0.139 parts per million.
+```{r}
+mercury_no <- FishMercury[2:30,] #data without outlier
+
+set.seed(15267)
+
+bootMeans3 <- numeric(numSamples)
+for(b in 1:numSamples){
+  # randomly sample with replacement from original observations:
+  bootSample <- sample(mercury_no, 29, replace = TRUE)
+  
+  # re-calculate the sample mean:
+  bootMeans3[b] <- mean(bootSample)
+}
+
+mean3c <- mean(bootMeans3) #estimate boot mean
+mean3c
+
+se3c <- sd(bootMeans3) #standard error of bootstrap 2
+se3c
+
+quantile(bootMeans3, c(0.025, 0.975)) # bootstrap 95% CI
+```
+
+**d)** The standard error of the bootstrap distribution is significantly smaller when the outlier is removed (0.008) than when it is included (0.058). 
+
+**4. Exercise 5.22**
+```{r}
+data(FlightDelays, package = "resampledata")
+```
+
+**a)** The distributions of the flight delay lengths for UA and AA flights are both skewed right, with what appears to be are several strong outliers with large delay lengths for each. The mean and standard deviation for the flight delay lengths of UA is 15.983 and 45.139 respectively. The mean and standard deviation for the flight delay lengths of AA is 10.098 and 40.081 respectively.
+```{r, fig.height = 4, fig.width = 4}
+UAdelays <- FlightDelays[FlightDelays$Carrier == "UA",] #subset of UA flights
+AAdelays <- FlightDelays[FlightDelays$Carrier == "AA",] #subset of AA flights
+
+#analysis for UA
+hist(UAdelays$Delay, main = "Distribution of UA flight delay lengths", xlab = "Flight Delay Length (minutes)")
+mean(UAdelays$Delay)
+sd(UAdelays$Delay)
+
+#analysis for AA
+hist(AAdelays$Delay, main = "Distribution of AA flight delay lengths", xlab = "Flight Delay Length (minutes)")
+mean(AAdelays$Delay)
+sd(AAdelays$Delay)
+```
+
+**b)** The bootstrap distribution for delay lengths of UA flights is normal and symmetrical centered at a mean flight delay length of 15.982 minutes and a standard error, or standard deviation, of 1.357 minutes. The bootstrap distribution for delay lengths of AA flights is normal and symmetrical centered at a mean flight delay length of 10.110 minutes and a standard error, or standard deviation, of 0.759 minutes.
+```{r, fig.height = 4, fig.width = 4}
+set.seed(494949)
+
+UAbootmeans <- numeric(numSamples)
+
+for(b in 1:numSamples){
+  # randomly sample with replacement from original observations:
+  bootSample <- sample(UAdelays$Delay, 1123, replace = TRUE)
+  
+  # re-calculate the sample mean:
+  UAbootmeans[b] <- mean(bootSample)
+}
+
+#histogram of flight delay lengths UA flights
+hist(UAbootmeans, main = "Bootstrap Dist. of UA flight Delay Lengths", xlab = "Boot mean value (minutes)") 
+
+mean(UAbootmeans) #mean of bootstrap for UA
+sd(UAbootmeans) #standard error of bootstrap for UA
+```
+
+```{r, fig.height = 4, fig.width = 4}
+set.seed(494949)
+
+AAbootmeans <- numeric(numSamples)
+
+for(b in 1:numSamples){
+  # randomly sample with replacement from original observations:
+  bootSample <- sample(AAdelays$Delay, 2906, replace = TRUE)
+  
+  # re-calculate the sample mean:
+  AAbootmeans[b] <- mean(bootSample)
+}
+
+#histogram of flight delay lengths AA flights
+hist(AAbootmeans, main = "Bootstrap Dist. of AA flight Delay Lengths", xlab = "Boot mean value (minutes)") 
+
+mean(AAbootmeans) #mean of bootstrap for AA
+sd(AAbootmeans) #standard error of bootstrap for AA
+```
+
+**c)** The bootstrap distribution for the ratio of mean delay lengths is normal and symmetrical centered at a mean ratio of means of 1.593 and a standard error, or standard deviation, of 0.180.
+```{r, fig.height = 4, fig.width = 4}
+set.seed(2345423)
+B <- 10000
+bootRatioMeans <- numeric(B)
+for(b in 1:B){
+  bootUASample <- sample(FlightDelays$Delay[FlightDelays$Carrier == "UA"], 
+                           replace = TRUE)
+  bootAASample <-  sample(FlightDelays$Delay[FlightDelays$Carrier == "AA"], 
+                           replace = TRUE)
+  bootRatioMeans[b] <- mean(bootUASample)/mean(bootAASample)
+}
+
+hist(bootRatioMeans, main = "Bootstrap Dist. of Ratio of Means for Flight Delay Lengths", xlab = "Ratio of Means (mean of UA / mean of AA)")
+
+mean(bootRatioMeans) #mean of bootstrap for AA
+sd(bootRatioMeans) #standard error of bootstrap for AA
+```
+
+**d)** The 95% bootstrap percentile interval for the ratio of means is (1.270, 1.967). In other words, I am 95% confident that (in the population) the mean flight delay length of United Airlines is 1.270 to 1.967 times longer than the mean flight delay length of American Airlines.
+```{r}
+quantile(bootRatioMeans, c(0.025, 0.975)) #95% bootstrap CI
+```
+
+**e)** The bootstrap estimate of the bias is 0.011 and the fraction of the bootstrap that the standard error represents is 0.059.
+```{r}
+#original sample stat
+statratio <- mean(UAdelays$Delay)/mean(AAdelays$Delay)
+
+bias <- mean(bootRatioMeans) - statratio #estimate of the bias
+bias
+
+bias/sd(bootRatioMeans) #fraction of bootstrap repped by standared error
+
+```
+
+**f)** The observations are not independent in this scenario because United Airlines and American Airlines are competitors in the airline industry and so, they would most likely match or try and have lower delay lengths
+with each other to compete with each other.
