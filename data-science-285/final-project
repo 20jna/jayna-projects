@@ -1,0 +1,418 @@
+---
+title: "NBA Statistical Analysis"
+author: Jay Na and Aaron Prentice
+output: html_document
+runtime: shiny
+---
+
+```{r, message=FALSE, include=FALSE}
+
+#Loading libraries
+
+library(tidyverse)
+library(class)
+library(shiny)
+library(ggthemes)
+```
+
+
+```{r, include =FALSE}
+#Reading in data and mutating for use
+
+stats_2018 <- read.csv("2017-18 nba - 2018.csv")  %>% mutate(YEAR = "2018") %>% filter(!(TEAM=="TEAM"))
+stats_2017 <-  read.csv("2017-18 nba - 2017.csv") %>% mutate(YEAR = "2017")
+stats_2016 <- read.csv("2017-18 nba - 2016.csv") %>% mutate(YEAR = "2016")
+stats_2015 <- read.csv("2017-18 nba - 2015.csv") %>% mutate(YEAR = "2015")
+stats_2014 <- read.csv("2017-18 nba - 2014.csv") %>% mutate(YEAR = "2014") %>% select(-X)
+```
+
+```{r, include =FALSE}
+#Filtering out variables and renaming columns for use
+
+nba_stats <- rbind(stats_2018, stats_2017, stats_2016, stats_2015, stats_2014) %>%
+  mutate("WINNING_TEAM" = if_else(`WIN.` > .4999, "Yes", "No")) %>% 
+  select(-c(`WIN.`, W, L, MIN, GP))
+colnames(nba_stats) <- c("TEAM", "PTS", "FGM", "FGA", "FG%", "3PTM", "3PA", "3P%", "FTM", "FTA", "FT%", "OREB", "DREB", "REB", "AST", "TOV", "STL", "BLK", "BLKA", "PF", "PFD", "PLUS_MINUS", "YEAR", "WINNING_TEAM")
+```
+
+
+```{r, include =FALSE}
+#Writing about our intro, research question, data, and methodolody
+
+intro <- "Introduction
+
+Every year 30 NBA teams compete against one another for a chance to
+win a championship.  In order to have this opportunity, a team has to
+first win enough games in the regular season to qualify for the
+playoffs.  Analytics have recently become a huge part of sports,
+especially basketball, so take a further look into how NBA
+statistics can be used.  
+
+Research Question:  
+
+What kind of an effect do certain NBA statistics have on winning
+basketball games?
+
+Data 
+
+We gathered data with team statistics for all 30 NBA teams from
+2014-2018.  All of the explanatory variables in our data set that
+were used to predict winning percentage are on a per game basis 
+(the Golden State Warriors averaged 113.5 points per game in 2018,
+so for our points variable, the value will be 113.5).  There were
+22 predictor variables in the training set after we filter out
+variables from the data set that have no effect on winning
+percentage (like total games played, because every team plays the 
+same amount of games). We then noticed that many of variables are
+highly correlated and decided to only include variables that we
+thought had the most impact predicting whether a NBA team will have
+a winning record. We selected 13 variables from the original 
+dataset- points, field goals made, field goal percentage, three
+pointers made, three point field goal percentage, free throw 
+attempts, free throw percentage, rebounds, assists, turnover
+percentage (per 100 possessions) steals, blocks, and plus/minus
+(the average margin of victory/defeat per game).
+
+Methodology
+
+We decided to take spreadsheets of team data from stats.nba.com 
+from all 30 NBA teams from the previous 5 complete seasons 
+(2014-2018) and upload them to github. We decided that the best
+way to display our data was to create a shiny app with an 
+interactive scatterplot. Our app allows the user to look at how 
+a statistic effects whether a team has a winning or not. We also
+wanted to allow the user to filter any of the categories in our 
+final dataset and only look at teams that meet the custom 
+criteria. By creating the app to accomplish these tasks, we even 
+allowed users to compare two different team statistics and see how
+those two statistics interacting effect winning in the NBA. 
+The one downside of doing this is that the user won't know what 
+point is correlated with what team.  Therefore, we created a data
+tab so that a user could look at all of an individual team's 
+statistics at once."
+```
+	
+```{r, echo= FALSE}
+#Writing interpreation for our data
+
+
+conclusion <- "Discussion/interpretation of results
+
+To interpret our results, we looked at the plots of all our variables 
+independently.  To do this, we view our graphs with our variables on
+the x-axis, and team names on the y-axis, with no filters applied.
+
+Points:
+
+Scoring points in basketball is crucial for winning basketball games.  
+It sounds very simple, but you need to score more points than your 
+opponent to win the game.  It appears that in general, the more points
+a team scores, the more likely they will have a winning record.  There
+are a few outliers on both sides but this seems reasonable because the
+graph does not take into account how many points a team allows.
+
+Field Goals Made: 
+
+Field Goals made is like points, but instead we are looking at how 
+shots teams actually made per game.  All but one team that made at
+least 41 shots per game made the playoffs, but if a team is under 41
+field goals made, then it looks like toss up whether that team has a
+winning record or not.  
+
+Field Goal %:
+
+While scoring points is definitely important to winning, what may be
+more important is how efficiently a team shoots the basketball. 
+Similar to points, it appears that the higher the percentage of shots
+a team makes, the more likely that team will have a winning record.  
+Although, this statistic seems to be more strongly connected to 
+winningthan total points was.
+
+3 Point Field Goals Made:
+
+The three point shot has becoming more popular in recent years as the 
+NBA has been moving away from having 2 big men on the court at the 
+same time and going towards 4-5 players around the perimeter. 
+Therefore, it is important to be able to make three point shots if it 
+will be large part of the offense.  The distribution of three point 
+field goals made shows that making at least 10 three pointers in a 
+game means that a team has a good chance at a winning record.  Any 
+amount of threes under 10 appears to be about 50/50 whether a team has a winning record.
+
+3 Point Field Goal %:
+
+Three point field goal percentage is very important because most shots
+are two point field goals.  If a team shoots two point shots at 50%, 
+then a team would be able to score the same amount of points by only 
+needing to shoot 33.3% from three.  There appears to be a defined 
+benchmark line at 36% for three point field goal percentage.  A heavy
+majority of teams over 36% have a winning record, and most teams with
+losing records shoot under 36%.
+
+Free Throw Attempts:
+
+Free throw attempts would seem to be a good gauge of how good a team
+is because a lot of free throws for a team would mean that opponents
+have to foul a lot in order to stop a team from scoring.  However, our
+graph of free throw attempts makes it appear that there is little 
+correlation between free throw attempts and winning.  
+
+Free Throw %: 
+
+Free throw percentage is very important because a missed free throw is
+a point that a team can never get back.  At least with a missed shot, 
+a team has the opportunity to get an offensive rebound.  Also, teams 
+losing close games in the final minute often elect to foul their 
+opponents because that is the only way to get the ball back, and if 
+the winning team can’t hit free throws, then they risk allowing their
+opponents to come back and win.  There appears to be some correlation
+between free throw percentage and being a winning team, but it is not
+very strong.
+
+Rebounds:
+
+Every time teams gets a rebound on a missed shot, they get a 
+possession, which leads to an opportunity to score.  This would seem 
+to be important but the amount of rebounds appears to be roughly 
+evenly distributed  between winning and losing teams.
+
+Assists:
+
+Assists are a good indication of how well a team passes the ball on 
+offense, looking to get teammates open shots.  Every team that assists
+on at least 26 field goals per game had a winning record and a heavy 
+majority of teams over 24 assists had a winning record.
+
+Turnover Percentage:
+
+Turnover Percentage is huge because every time a team turns the 
+ball over, they forfeit the opportunity to attempt a shot, and it may
+even result in a fast break lay-up for the other team.  There does 
+not seem to be significant correlation between the percentage of 
+possessions a team turns the ball over and having a winning a record.
+In fact, all four teams that had turnovers on under 12% of their 
+possessions had a losing record.
+
+Steals:
+
+Steals are one way a defense can create live ball turnovers, which
+means not only does the other team not get a chance to shoot, but the
+team that makes the steal has a good chance at an easy lay up on a
+fast break.  It was interesting to see that the teams with both the 
+most and least amount of steals tended to be winning teams and most 
+of the losing teams were in the middle.
+
+
+Summary
+
+Based off our results, we came to the conclusion that the three most
+important statistics that lead to a winning record in the NBA are 
+field goal percentage, three point percentage, and assists.  There 
+are two possible paths that could be taken for further research.  One 
+would be to look at team defensive metrics as well to see if those 
+also had an effect on winning NBA games.  The other future testing 
+would be looking at the interraction terms and seeing their 
+correlations with a winning record.
+"
+```
+
+
+```{r, echo=FALSE, warning= FALSE, message=FALSE}
+# Global variables created for potential axes
+
+library(shiny)
+
+axis_vars <- c("Team" = "TEAM",
+                "Points Made"= "PTS",
+               "Field Goals Made" = "FGM",
+               "Field Goal Percentage" = "`FG%`",
+               "3-PTs Made" = "`3PTM`",
+               "3-PT Percentage" = "`3P%`",
+               "Free Throw Attempts" = "FTA",
+               "Free Throw Percentage" = "`FT%`",
+               "Number of Rebounds" = "REB",
+               "Number of Assists" = "AST", 
+               "Turnover Percentage" = "TOV", 
+               "Number of Steals" = "STL", 
+               "+/- Ratio" = "PLUS_MINUS",
+               "Season Year" = "YEAR"
+)
+
+# Defining UI for application that draws the scatterplot
+
+ui <- fluidPage(
+   titlePanel("NBA Stats Analysis"),
+   sidebarLayout(
+    sidebarPanel(
+  column(12,
+         wellPanel(                         #Panel used for creating filters for the user
+           
+           h4("Filters"),
+           sliderInput("YEAR", "Season Years", 2014, 2018, value = c(2014, 2018),
+                       sep = ""),
+           sliderInput("PTS", "Amount of Points",
+                       90, 120, c(90,120), step = .1),
+           sliderInput("FGM", "Field Goals Made",
+                       33, 44, c(33, 44), step = .1),
+           sliderInput("FG%",  "Field Goal Percentage",
+                       40, 51, c(40, 51), step = .1),
+           sliderInput("3PTM",  "3 Point Field Goals Made",
+                       4.5, 15.5, c(4.5, 15.5), step = .1),
+           sliderInput("3P%",  "3 Point Field Goal Percentage",
+                       31, 42, c(31, 42), step = .1),
+           sliderInput("FTA",  "Free Throw Attempts",
+                       16, 32, c(16, 32), step = .1),
+           sliderInput("FT%",  "Free Throw Percentage",
+                       66, 82, c(66, 82), step = .1),
+           sliderInput("REB",  "Rebounds",
+                       36, 49, c(36, 49), step = .1),
+           sliderInput("AST",  "Assists",
+                       18, 31, c(18, 31), step = .1),
+           sliderInput("TOV",  "Turnover Percentage",
+                       11, 18, c(11, 18), step = .1),
+           sliderInput("STL",  "Steals",
+                       5, 10, c(5, 10), step = .1),
+           sliderInput("PLUS_MINUS",  "+/-",
+                       -11, 12, c(-11, 12), step = .1)
+         ),
+         wellPanel(                           #Allows user to change axes on data
+           selectInput("xvar", "X-axis variable", axis_vars, selected = "PTS"),
+           selectInput("yvar", "Y-axis variable", axis_vars, selected = "TEAM")
+        
+   )  ,
+   wellPanel(                #Allows user to search for individual team stats in data tab
+     
+     h4("Individual Team Data"),
+     selectInput("TEAM", label = "Team", choices = nba_stats$TEAM)
+     
+   )
+   )
+  ),
+  
+  mainPanel(                     #Orgnanizing our shiny app
+    tabsetPanel(type = "tab",
+                tabPanel("Plot",
+                         fluidRow(
+                          fluidRow(plotOutput(outputId="scatter")),
+                          fluidRow(textOutput(outputId="n_NBA"))
+                         )),
+               tabPanel("Data", tableOutput("nba_stats")),
+               tabPanel("Introduction, Research Question, Data, and Methodology", verbatimTextOutput("intro")),
+               tabPanel("Discussion/interpretation of results", verbatimTextOutput("conclusion"))
+                )
+  )
+)
+)
+
+# Writing the commands to take the inputs and draw the scatterplot
+server <- function(input, output) {
+  
+  # Data manipulation for user
+  
+  # Filters NBA stats, returning a data frame
+  reactive_nba <- reactive({
+    
+    team <- input$TEAM
+    maxpts <- input$PTS[1]
+    minpts <- input$PTS[2]
+    minyear <- input$YEAR[1]
+    maxyear <- input$YEAR[2]
+    maxfgm <- input$FGM[1]
+    minfgm <- input$FGM[2]
+    maxfgp <- input$`FG%`[1]
+    minfgp <- input$`FG%`[2]
+    max3ptm <- input$`3PTM`[1]
+    min3ptm <- input$`3PTM`[2]
+    max3pp <- input$`3P%`[1]
+    min3pp <- input$`3P%`[2]
+    maxfta <- input$FTA[1]
+    minfta <- input$FTA[2]
+    maxftp <- input$`FT%`[1]
+    minftp <- input$`FT%`[2]
+    maxreb <- input$REB[1]
+    minreb <- input$REB[2]
+    maxast <- input$AST[1]
+    minast <- input$AST[2]
+    maxtov <- input$TOV[1]
+    mintov <- input$TOV[2]
+    maxstl <- input$STL[1]
+    minstl <- input$STL[2]
+    maxpi <- input$PLUS_MINUS[1]
+    minpi <- input$PLUS_MINUS[2]
+    
+    # Applies filters to scatterplot
+    
+    m <- nba_stats %>%
+      filter(
+        PTS >= maxpts,
+        PTS <= minpts,
+        YEAR >= minyear,
+        YEAR <= maxyear,
+        FGM >= maxfgm,
+        FGM <= minfgm,
+        `FG%` >= maxfgp,
+        `FG%` <= minfgp,
+        `3PTM` >= max3ptm,
+        `3PTM` <= min3ptm,
+        `3P%` >= max3pp,
+        `3P%` <= min3pp,
+        FTA >= maxfta,
+        FTA <= minfta,
+        `FT%` >= maxftp,
+        `FT%` <= minftp,
+        REB >= maxreb,
+        REB <= minreb,
+        AST >= maxast,
+        AST <= minast,
+        TOV >= maxtov,
+        TOV <= mintov,
+        STL >= maxstl,
+        STL <= minstl,
+        PLUS_MINUS  >= maxpi,
+        PLUS_MINUS  <= minpi
+      ) %>%
+      arrange(WINNING_TEAM)
+    
+    m <- as.data.frame(m)
+  
+  })
+   
+  # Storing the scatterplot 
+  
+  output$scatter <- renderPlot({
+    reactive_nba() %>%
+    ggplot(aes_string(x = input$xvar, y = input$yvar)) +
+      geom_point(aes(color = WINNING_TEAM), alpha = 0.5
+      ) +
+      scale_color_colorblind("Winning Team") +
+      labs(main = "Data Analysis Plot")
+  }, width = 600, height = 400)
+  
+  # Prints the number of NBA teams selected
+  
+  output$n_NBA <- renderText({ 
+    str_c(
+      "Number of NBA teams selected: ", 
+      reactive_nba() %>% nrow()
+    )
+  })
+  
+  #Data table output
+  
+  output$nba_stats  <- renderTable({
+    stateFilter <- subset(nba_stats, nba_stats$TEAM == input$TEAM)
+  })
+  
+  #Introduction, research question and methodology output
+  
+  output$intro <- renderText({intro})
+  
+  #Discussion and Interpretation output
+  
+  output$conclusion <- renderText({conclusion})
+}
+
+
+# Running the application 
+shinyApp(ui = ui, server = server)
+```
