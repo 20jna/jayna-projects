@@ -1,0 +1,37 @@
+---
+title: 'InClass #1'
+author: "Jay Na"
+date: "9/25/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(tidyverse)
+
+birthorder <- read.csv("https://raw.githubusercontent.com/aloy/math315-fall2019/master/data/birthorder.csv")
+View(birthorder)
+```
+
+```{r}
+
+
+totalgirls <- (sum(birthorder$first==1) + sum(birthorder$second==1))
+
+lambda <- seq(0, 1, by = .001)
+
+prior <- 1
+likelihood <- exp(dbinom(totalgirls, 200, prob = lambda, log = TRUE))
+
+posterior <- prior*likelihood/sum(prior*likelihood)
+```
+
+
+```{r}
+lambda[which.max(posterior)]
+```
+
+
