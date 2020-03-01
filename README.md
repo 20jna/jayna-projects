@@ -1,7 +1,7 @@
 # jayna-projects
-*Jay Na's Repository of Past Work & Projects*
+*Jay Na's Repository of Past Coding Work & Projects*
 
-Carreer Objective:
+Carreer Objectives:
 
 - Continue to grow my understanding of statistical analyses and its real-world applications, especially in the fast-moving tech sector
 
@@ -20,9 +20,9 @@ Technical Skills:
 
 - Mathematica (graphing multivariable equations and problem sets)
 
-Contents:
+Respository Contents:
 
-- Intro to Computer Science
+- Intro to Computer Science (Python)
 
 - Applied Regression Analysis
 
