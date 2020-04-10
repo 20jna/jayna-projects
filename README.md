@@ -36,6 +36,6 @@ Respository Contents:
 
 - Statistical Consulting
 
-- Sleep and Dreaming
+- Sleep and Dreaming Study
 
 
