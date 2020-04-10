@@ -22,7 +22,7 @@ Technical Skills:
 
 Respository Contents:
 
-- Intro to Computer Science (Python)
+- Computer Science (Python)
 
 - Applied Regression Analysis
 
